@@ -2,9 +2,9 @@ name: Maven Build and Test  # Nome del workflow
 
 on:  # Quando triggerare
   push:  # Su push a main o altri branch
-    branches: [ "main" ]  # Cambia se usi master o altri
+    branches: [ "master" ]  # Cambia se usi master o altri
   pull_request:  # Su pull request
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:  # I job da eseguire
   build:  # Nome del job
