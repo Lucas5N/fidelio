@@ -24,9 +24,3 @@ jobs:  # I job da eseguire
     - name: Build with Maven  # Esegui build e test
       run: mvn clean install  # O mvn verify se hai integration tests
 
-    # Opzionale: Aggiungi report test se falliscono
-    - name: Publish Test Results
-      if: always()  # Anche se fallisce
-      uses: scacap/action-surefire-report@v1
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
