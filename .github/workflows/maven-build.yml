@@ -1,0 +1,32 @@
+name: Maven Build and Test  # Nome del workflow
+
+on:  # Quando triggerare
+  push:  # Su push a main o altri branch
+    branches: [ "main" ]  # Cambia se usi master o altri
+  pull_request:  # Su pull request
+    branches: [ "main" ]
+
+jobs:  # I job da eseguire
+  build:  # Nome del job
+
+    runs-on: ubuntu-latest  # Macchina virtuale (Linux è ok per Java)
+
+    steps:  # Passi sequenziali
+    - uses: actions/checkout@v4  # Scarica il codice dal repo
+
+    - name: Set up JDK 17  # Imposta Java 17 (dal tuo progetto)
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'  # La tua versione
+        distribution: 'temurin'  # O adoptojdk, zulu, ecc.
+        cache: maven  # Cache per Maven per velocizzare
+
+    - name: Build with Maven  # Esegui build e test
+      run: mvn clean install  # O mvn verify se hai integration tests
+
+    # Opzionale: Aggiungi report test se falliscono
+    - name: Publish Test Results
+      if: always()  # Anche se fallisce
+      uses: scacap/action-surefire-report@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
