@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JpaBuddyIdeaProjectConfig" newRepositoryParent="org.springframework.data.jpa.repository.JpaRepository">
+    <option name="reLastEntityCreationPackage" value="src/main/it.unisa.fidelio/Repository" />
+    <option name="reverseEngineeringLastDbConnectionId" value="60435eb2-aeec-443b-b84e-4685655ff70d" />
+  </component>
+</project>
