@@ -10,5 +10,22 @@
     });
 })();
 
-// (Opzionale) Se più avanti vuoi caricare films via API e renderizzarli dinamicamente:
-// fetch("/api/home").then(r => r.json()).then(data => console.log(data));
+document.addEventListener("DOMContentLoaded", () => {
+    const cards = document.querySelectorAll(".plan-card");
+
+    const setActive = (card) => {
+        cards.forEach(c => c.classList.toggle("is-active", c === card));
+    };
+
+    cards.forEach(card => {
+        card.addEventListener("click", () => setActive(card));
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setActive(card);
+            }
+        });
+    });
+});
+
+
