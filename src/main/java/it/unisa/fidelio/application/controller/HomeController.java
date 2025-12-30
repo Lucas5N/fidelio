@@ -1,6 +1,6 @@
-package it.unisa.fidelio.businesslogic;
+package it.unisa.fidelio.application.controller;
 
-import it.unisa.fidelio.HomeService;
+import it.unisa.fidelio.application.HomeService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

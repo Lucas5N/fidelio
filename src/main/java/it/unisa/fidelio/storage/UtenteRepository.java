@@ -15,7 +15,7 @@ public interface UtenteRepository extends JpaRepository<Utente, Integer> {
 
     // Ricerca utenti
     List<Utente> findByUsernameContainingIgnoreCase(String partialUsername);
-
+    Optional<Utente> findByUsername(String username);
     // Per admin o filtri
     List<Utente> findByDtype(String dtype);
 }

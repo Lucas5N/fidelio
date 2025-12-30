@@ -1,4 +1,4 @@
-package it.unisa.fidelio.presentation.dto;
+package it.unisa.fidelio.presentation;
 
 import lombok.Data;
 

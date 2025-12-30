@@ -1,7 +1,7 @@
-package it.unisa.fidelio;
+package it.unisa.fidelio.application;
 
-import it.unisa.fidelio.dataaccess.FilmCardDto;
-import it.unisa.fidelio.dataaccess.TmdbMovieDto;
+import it.unisa.fidelio.presentation.FilmCardDto;
+import it.unisa.fidelio.presentation.TmdbMovieDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

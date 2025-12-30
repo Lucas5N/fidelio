@@ -1,6 +1,6 @@
-package it.unisa.fidelio;
+package it.unisa.fidelio.application;
 
-import it.unisa.fidelio.dataaccess.TmdbGenre;
+import it.unisa.fidelio.presentation.TmdbGenre;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;

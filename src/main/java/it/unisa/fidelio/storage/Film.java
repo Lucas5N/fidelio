@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -12,10 +13,11 @@ import java.util.Set;
 @Entity
 @Table(name = "film")
 public class Film {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "titolo", nullable = false)
     private String titolo;
@@ -40,13 +42,12 @@ public class Film {
     @Column(name = "locandina")
     private String locandina;
 
-    // LATO PASSIVO: riferisce al campo 'film' in ListaPrivata
-    @ManyToMany(mappedBy = "film")
-    private Set<ListaPrivata> listePrivate = new LinkedHashSet<>();
+    // Rimuovi queste due relazioni – non servono più per GF
+    // @ManyToMany(mappedBy = "film")
+    // private Set<ListaPrivata> listePrivate = new LinkedHashSet<>();
 
-    // LATO PASSIVO: riferisce al campo 'film' in ListaRaccomandati
-    @ManyToMany(mappedBy = "film")
-    private Set<ListaRaccomandati> listeRaccomandati = new LinkedHashSet<>();
+    // @ManyToMany(mappedBy = "film")
+    // private Set<ListaRaccomandati> listeRaccomandati = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "film")
     private Set<Recensione> recensioni = new LinkedHashSet<>();

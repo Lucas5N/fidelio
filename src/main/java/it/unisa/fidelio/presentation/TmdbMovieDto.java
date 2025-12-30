@@ -1,4 +1,4 @@
-package it.unisa.fidelio.dataaccess;
+package it.unisa.fidelio.presentation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

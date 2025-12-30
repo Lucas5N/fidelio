@@ -58,7 +58,7 @@ public class UtenteService {
         utenteRepo.save(u);
     }
 
-    private UtenteDTO mapToDTO(Utente u) {
+    public UtenteDTO mapToDTO(Utente u) {
         return new UtenteDTO(
                 u.getId(),
                 u.getUsername(),

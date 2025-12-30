@@ -1,6 +1,7 @@
-package it.unisa.fidelio.dataaccess;
+package it.unisa.fidelio.storage.api_data;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import it.unisa.fidelio.presentation.TmdbMovieDto;
+
 import java.util.List;
 
 public record TmdbMovieListResponse(

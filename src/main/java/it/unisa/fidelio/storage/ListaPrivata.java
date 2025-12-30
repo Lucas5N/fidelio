@@ -6,15 +6,20 @@ import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "lista_privata")
 public class ListaPrivata {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -39,12 +44,27 @@ public class ListaPrivata {
     @JoinColumn(name = "proprietario_id", nullable = false)
     private Utente proprietario;
 
-    // LATO ATTIVO: Definisce la tabella di giunzione
-    @ManyToMany
-    @JoinTable(
-            name = "lista_privata_film",
-            joinColumns = @JoinColumn(name = "lista_id"),
-            inverseJoinColumns = @JoinColumn(name = "film_id")
+    // ===================================================================
+    // RIMOSSA la relazione con Film interno (non la usiamo più per GF)
+    // ===================================================================
+
+    // ===================================================================
+    // FILM DA TMDB (tmdbId = Long)
+    // ===================================================================
+    @ElementCollection
+    @CollectionTable(
+            name = "lista_privata_tmdb",
+            joinColumns = @JoinColumn(name = "lista_id")
     )
-    private Set<Film> film = new LinkedHashSet<>();
+    @Column(name = "tmdb_id", nullable = false)
+    private Set<Long> tmdbIds = new LinkedHashSet<>();
+
+    @ElementCollection
+    @CollectionTable(
+            name = "lista_privata_tmdb",
+            joinColumns = @JoinColumn(name = "lista_id")
+    )
+    @MapKeyColumn(name = "tmdb_id")
+    @Column(name = "data_visione")
+    private Map<Long, LocalDate> dataVisioneTmdb = new HashMap<>();
 }

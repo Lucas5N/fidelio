@@ -18,7 +18,7 @@ public class ListaRaccomandatiFilmId implements Serializable {
     private Integer listaId;
 
     @Column(name = "film_id", nullable = false)
-    private Integer filmId;
+    private Long filmId;
 
     @Override
     public boolean equals(Object o) {

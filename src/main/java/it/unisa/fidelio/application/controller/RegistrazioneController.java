@@ -1,7 +1,7 @@
 package it.unisa.fidelio.application.controller;
 
 import it.unisa.fidelio.application.UtenteService;
-import it.unisa.fidelio.presentation.dto.RegistrazioneRequestDTO;
+import it.unisa.fidelio.presentation.RegistrazioneRequestDTO;
 import it.unisa.fidelio.presentation.UtenteDTO;
 import it.unisa.fidelio.storage.Utente;
 import org.springframework.http.HttpStatus;

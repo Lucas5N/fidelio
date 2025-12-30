@@ -1,7 +1,8 @@
-package it.unisa.fidelio;
+package it.unisa.fidelio.application;
 
-import it.unisa.fidelio.dataaccess.TmdbGenreListResponse;
-import it.unisa.fidelio.dataaccess.TmdbMovieListResponse;
+import it.unisa.fidelio.presentation.TmdbMovieDto;
+import it.unisa.fidelio.storage.api_data.TmdbGenreListResponse;
+import it.unisa.fidelio.storage.api_data.TmdbMovieListResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -27,6 +28,30 @@ public class TmdbClient {
         this.restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
+    }
+
+
+    public TmdbMovieListResponse searchMovies(String query, int page) {
+        return restClient.get()
+                .uri(uri -> uri.path("/search/movie")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("query", query)
+                        .queryParam("language", language)
+                        .queryParam("region", region)
+                        .queryParam("page", page)
+                        .build())
+                .retrieve()
+                .body(TmdbMovieListResponse.class);
+    }
+
+    public TmdbMovieDto getMovieDetails(Long tmdbId) {
+        return restClient.get()
+                .uri(uri -> uri.path("/movie/" + tmdbId)
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", language)
+                        .build())
+                .retrieve()
+                .body(TmdbMovieDto.class);
     }
 
     public TmdbMovieListResponse getPopular(int page) {

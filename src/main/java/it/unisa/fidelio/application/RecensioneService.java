@@ -21,7 +21,7 @@ public class RecensioneService {
         this.filmRepo = filmRepo;
     }
 
-    public Recensione scriviRecensione(int autoreId, int filmId, String testo, double voto) {
+    public Recensione scriviRecensione(int autoreId, Long filmId, String testo, double voto) {
         Utente autore = utenteRepo.findById(autoreId).orElseThrow(() -> new IllegalArgumentException("Utente non valido"));
         Film film = filmRepo.findById(filmId).orElseThrow(() -> new IllegalArgumentException("Film non valido"));
 
@@ -35,7 +35,7 @@ public class RecensioneService {
         return recensioneRepo.save(r);
     }
 
-    public List<Recensione> getRecensioniPerFilm(int filmId) {
+    public List<Recensione> getRecensioniPerFilm(Long filmId) {
         Film f = filmRepo.findById(filmId).orElseThrow();
         return recensioneRepo.findByFilm(f);
     }
