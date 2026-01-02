@@ -42,13 +42,6 @@ public class Film {
     @Column(name = "locandina")
     private String locandina;
 
-    // Rimuovi queste due relazioni – non servono più per GF
-    // @ManyToMany(mappedBy = "film")
-    // private Set<ListaPrivata> listePrivate = new LinkedHashSet<>();
-
-    // @ManyToMany(mappedBy = "film")
-    // private Set<ListaRaccomandati> listeRaccomandati = new LinkedHashSet<>();
-
     @OneToMany(mappedBy = "film")
     private Set<Recensione> recensioni = new LinkedHashSet<>();
 }

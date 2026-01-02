@@ -1,6 +1,6 @@
 package it.unisa.fidelio.application;
 
-import it.unisa.fidelio.presentation.TmdbMovieDto;
+import it.unisa.fidelio.presentation.TmdbMovieDetailsDTO;
 import it.unisa.fidelio.storage.api_data.TmdbGenreListResponse;
 import it.unisa.fidelio.storage.api_data.TmdbMovieListResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,14 +44,14 @@ public class TmdbClient {
                 .body(TmdbMovieListResponse.class);
     }
 
-    public TmdbMovieDto getMovieDetails(Long tmdbId) {
+    public TmdbMovieDetailsDTO getMovieDetails(Long tmdbId) {
         return restClient.get()
                 .uri(uri -> uri.path("/movie/" + tmdbId)
                         .queryParam("api_key", apiKey)
                         .queryParam("language", language)
                         .build())
                 .retrieve()
-                .body(TmdbMovieDto.class);
+                .body(TmdbMovieDetailsDTO.class);
     }
 
     public TmdbMovieListResponse getPopular(int page) {
