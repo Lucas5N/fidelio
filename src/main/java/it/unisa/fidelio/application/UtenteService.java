@@ -21,24 +21,46 @@ public class UtenteService {
     }
 
     public UtenteDTO login(String email, String passwordChiaro) {
-        // Cerchiamo l'utente tramite email
-        return utenteRepo.findByEmail(email)
+        return utenteRepo.findByEmail(email.toLowerCase())
                 .filter(utente -> passwordEncoder.matches(passwordChiaro, utente.getPassword()))
                 .map(this::mapToDTO)
                 .orElse(null);
     }
 
-    //SE QUALCOSA VA STORTO FA ROLLBACK
     @Transactional
     public Utente registrazione(Utente utente) {
-        if (utenteRepo.existsByEmail(utente.getEmail())) {
+        // Validazioni server-side con regex
+        String username = utente.getUsername();
+        String email = utente.getEmail();
+        String password = utente.getPassword();
+
+        if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
+            throw new IllegalArgumentException("Username non valido: 3-20 caratteri, solo lettere, numeri e _");
+        }
+
+        if (email == null || !email.matches("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            throw new IllegalArgumentException("Formato email non valido");
+        }
+
+        if (password == null || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d!@#$%^&*]{8,}$")) {
+            throw new IllegalArgumentException("Password troppo debole: almeno 8 caratteri, con maiuscola, minuscola e numero");
+        }
+
+        // Controlli unicità
+        if (utenteRepo.existsByEmail(email.toLowerCase())) {
             throw new IllegalArgumentException("Email già in uso");
         }
-        if (utenteRepo.existsByUsername(utente.getUsername())) {
+        if (utenteRepo.existsByUsername(username)) {
             throw new IllegalArgumentException("Username già in uso");
         }
-        utente.setPassword(passwordEncoder.encode(utente.getPassword()));
 
+        // Hash password
+        utente.setPassword(passwordEncoder.encode(password));
+
+        // Normalizza email
+        utente.setEmail(email.toLowerCase());
+
+        // Data registrazione
         if (utente.getDataRegistrazione() == null) {
             utente.setDataRegistrazione(Instant.now());
         }

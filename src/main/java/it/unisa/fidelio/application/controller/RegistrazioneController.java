@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/registrazione")
 @CrossOrigin(origins = "*")
@@ -19,31 +22,79 @@ public class RegistrazioneController {
         this.utenteService = utenteService;
     }
 
-    @PostMapping                   //DESERIALIZZA IL JSON INVIATOGLI IN OGGETTO JAVA
+    @PostMapping
     public ResponseEntity<?> registra(@RequestBody RegistrazioneRequestDTO dto) {
         try {
-            Utente nuovoUtente = new Utente();
-            nuovoUtente.setUsername(dto.getUsername());
-            nuovoUtente.setEmail(dto.getEmail());
-            nuovoUtente.setPassword(dto.getPassword());
-            nuovoUtente.setBio(dto.getBio());
-            nuovoUtente.setDtype("Cinefilo");
-            nuovoUtente.setLivelloAccesso("BASE");
+            // Validazione e trim campi base
+            String username = dto.getUsername() != null ? dto.getUsername().trim() : null;
+            String email = dto.getEmail() != null ? dto.getEmail().trim().toLowerCase() : null;
+            String password = dto.getPassword();
 
+            if (username == null || username.isEmpty() ||
+                    email == null || email.isEmpty() ||
+                    password == null || password.isEmpty()) {
+                return ResponseEntity.badRequest().body("Tutti i campi obbligatori (username, email, password) devono essere compilati");
+            }
+
+            // Gestione dtype
+            String dtype = dto.getDtype() != null ? dto.getDtype().trim() : "Cinefilo";
+            List<String> dtypeValidi = Arrays.asList("Cinefilo", "Critico", "Fedele");
+            if (!dtypeValidi.contains(dtype)) {
+                dtype = "Cinefilo";
+            }
+
+            // Creazione entità
+            Utente nuovoUtente = new Utente();
+            nuovoUtente.setUsername(username);
+            nuovoUtente.setEmail(email);
+            nuovoUtente.setPassword(password); // verrà hashata nel service
+            nuovoUtente.setDtype(dtype);
+
+            // Gestione campi esclusivi in base al dtype
+            if ("Critico".equals(dtype)) {
+                String testata = dto.getTestataGiornalistica();
+                if (testata == null || testata.trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body("La testata giornalistica è obbligatoria per i Critici");
+                }
+                nuovoUtente.setTestataGiornalistica(testata.trim());
+
+            } else if ("Fedele".equals(dtype)) {
+                String casaProduzione = dto.getCasaProduzione();
+                String creditReference = dto.getCreditReference();
+
+                if (casaProduzione == null || casaProduzione.trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body("La casa di produzione è obbligatoria per i Fedeli");
+                }
+                if (creditReference == null || creditReference.trim().isEmpty()) {
+                    return ResponseEntity.badRequest().body("Il credit reference (es. link IMDB) è obbligatorio per i Fedeli");
+                }
+
+                nuovoUtente.setCasaProduzione(casaProduzione.trim());
+                nuovoUtente.setCreditReference(creditReference.trim());
+            }
+            // Per Cinefilo: nulla da fare, campi extra ignorati
+
+            // Livello accesso: PENDING per profili da approvare
+            if ("Critico".equals(dtype) || "Fedele".equals(dtype)) {
+                nuovoUtente.setLivelloAccesso("PENDING");
+            } else {
+                nuovoUtente.setLivelloAccesso("BASE");
+            }
+
+            // Salvataggio
             Utente utenteSalvato = utenteService.registrazione(nuovoUtente);
 
-            // 3. AUTO-LOGIN: Trasformiamo l'entity appena salvata in un UtenteDTO
+            // Auto-login
             UtenteDTO utenteLoggato = utenteService.mapToDTO(utenteSalvato);
 
-            // 4. Restituiamo l'utente al frontend con stato 201 Created
-            // Il frontend vedrà questo oggetto e saprà che l'utente è "loggato"
             return ResponseEntity.status(HttpStatus.CREATED).body(utenteLoggato);
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
+            e.printStackTrace(); // per debug in console
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore durante la registrazione: " + e.getMessage());
+                    .body("Errore durante la registrazione. Riprova più tardi.");
         }
     }
 }

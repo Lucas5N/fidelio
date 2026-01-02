@@ -145,6 +145,30 @@ body{
     background-position: center;
     background-repeat: no-repeat;
 }
+/*inizio fix
+/* FIX INTERAZIONE FORM - VERSIONE MIGLIORE */
+.hero form,
+.hero input,
+.hero button,
+.hero select,
+.hero textarea {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 10;
+}
+
+/* Assicura che l'overlay non blocchi */
+.hero--collage::before,
+.hero--collage::after {
+    pointer-events: none;
+}
+
+
+
+
+
+
+/*fine fix
 
 /* Overlay per rendere leggibile la navbar (e futura headline) */
 .hero--collage::before{
@@ -1089,5 +1113,4 @@ body{
         font-size: 15px;
     }
 }
-
 
