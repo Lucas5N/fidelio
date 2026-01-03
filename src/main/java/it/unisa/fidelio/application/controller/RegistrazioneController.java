@@ -29,11 +29,14 @@ public class RegistrazioneController {
             String username = dto.getUsername() != null ? dto.getUsername().trim() : null;
             String email = dto.getEmail() != null ? dto.getEmail().trim().toLowerCase() : null;
             String password = dto.getPassword();
+            String nome = dto.getNome() != null ? dto.getNome().trim() : null;
+            String cognome = dto.getCognome() != null ? dto.getCognome().trim() : null;
 
-            if (username == null || username.isEmpty() ||
+
+            if (nome == null || cognome == null || username == null || username.isEmpty() ||
                     email == null || email.isEmpty() ||
                     password == null || password.isEmpty()) {
-                return ResponseEntity.badRequest().body("Tutti i campi obbligatori (username, email, password) devono essere compilati");
+                return ResponseEntity.badRequest().body("Tutti i campi obbligatori (nome, cognome, username, email, password) devono essere compilati");
             }
 
             // Gestione dtype

@@ -11,6 +11,8 @@ public class RegistrazioneRequestDTO {
     private String username;
     private String email;
     private String password;
+    private String nome;
+    private String cognome;
     private String dtype; // Cinefilo, Critico, Fedele
     private String testataGiornalistica;
     private String casaProduzione;

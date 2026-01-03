@@ -33,6 +33,8 @@ public class UtenteService {
         String username = utente.getUsername();
         String email = utente.getEmail();
         String password = utente.getPassword();
+        String nome = utente.getNome();
+        String cognome = utente.getCognome();
 
         if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
             throw new IllegalArgumentException("Username non valido: 3-20 caratteri, solo lettere, numeri e _");
@@ -44,6 +46,14 @@ public class UtenteService {
 
         if (password == null || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d!@#$%^&*]{8,}$")) {
             throw new IllegalArgumentException("Password troppo debole: almeno 8 caratteri, con maiuscola, minuscola e numero");
+        }
+
+        if(nome == null || !nome.matches("^[A-zÀ-ù ‘-]{2,30}$")){
+            throw new IllegalArgumentException("Nome non rispetta il formato (lunghezza 2-30)");
+        }
+
+        if(cognome == null || !cognome.matches("^[A-zÀ-ù ‘-]{2,30}$")){
+            throw new IllegalArgumentException("Cognome non rispetta il formato (lunghezza 2-30)");
         }
 
         // Controlli unicità
