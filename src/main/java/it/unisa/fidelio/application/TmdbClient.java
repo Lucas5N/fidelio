@@ -1,6 +1,8 @@
 package it.unisa.fidelio.application;
 
+import it.unisa.fidelio.presentation.TmdbMovieCreditsDTO;
 import it.unisa.fidelio.presentation.TmdbMovieDetailsDTO;
+import it.unisa.fidelio.presentation.TmdbReviewResponseDTO;
 import it.unisa.fidelio.storage.api_data.TmdbGenreListResponse;
 import it.unisa.fidelio.storage.api_data.TmdbMovieListResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,4 +89,26 @@ public class TmdbClient {
                 .retrieve()
                 .body(TmdbGenreListResponse.class);
     }
+
+    public TmdbMovieCreditsDTO getMovieCredits(Long tmdbId) {
+        return restClient.get()
+                .uri(uri -> uri.path("/movie/" + tmdbId + "/credits")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", language)
+                        .build())
+                .retrieve()
+                .body(TmdbMovieCreditsDTO.class);
+    }
+
+    public TmdbReviewResponseDTO getMovieReviews(Long tmdbId, int page) {
+        return restClient.get()
+                .uri(uri -> uri.path("/movie/{id}/reviews")
+                        .queryParam("api_key", apiKey)
+                        .queryParam("language", language)
+                        .queryParam("page", page)
+                        .build(tmdbId))
+                .retrieve()
+                .body(TmdbReviewResponseDTO.class);
+    }
+
 }

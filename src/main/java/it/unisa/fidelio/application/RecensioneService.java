@@ -1,6 +1,8 @@
 package it.unisa.fidelio.application;
 
+import it.unisa.fidelio.presentation.PopularReviewViewDTO;
 import it.unisa.fidelio.presentation.RecensioneDTO;
+import it.unisa.fidelio.presentation.TmdbReviewResponseDTO;
 import it.unisa.fidelio.storage.*;
 import org.springframework.stereotype.Service;
 
@@ -13,9 +15,12 @@ public class RecensioneService {
     private final RecensioneRepository recensioneRepo;
     private final FilmRepository filmRepo;
 
-    public RecensioneService(RecensioneRepository recensioneRepo, FilmRepository filmRepo) {
+    private final TmdbClient tmdbClient;
+
+    public RecensioneService(RecensioneRepository recensioneRepo, FilmRepository filmRepo, TmdbClient tmdbClient) {
         this.recensioneRepo = recensioneRepo;
         this.filmRepo = filmRepo;
+        this.tmdbClient = tmdbClient;
     }
 
     public Recensione scriviRecensione(Utente autore, Film film, String testo, double voto, boolean spoilerAlert) {
@@ -86,4 +91,60 @@ public class RecensioneService {
         }
         recensioneRepo.delete(r);
     }
+
+    public java.util.List<PopularReviewViewDTO> getPopularReviewsFromTmdb(Long tmdbId, int limit) {
+        TmdbReviewResponseDTO res = tmdbClient.getMovieReviews(tmdbId, 1);
+        if (res == null || res.results() == null) return java.util.List.of();
+
+        return res.results().stream()
+                .limit(limit)
+                .map(this::toPopularReviewView)
+                .toList();
+    }
+
+    private PopularReviewViewDTO toPopularReviewView(TmdbReviewResponseDTO.TmdbReviewDTO r) {
+        String username = r.authorDetails() != null && r.authorDetails().username() != null
+                ? r.authorDetails().username()
+                : r.author();
+
+        String avatarInitial = (username != null && !username.isBlank())
+                ? ("" + Character.toUpperCase(username.charAt(0)))
+                : "U";
+
+        // TMDB author_details.rating è su scala 10, spesso null
+        String starsText = ratingToStars(r.authorDetails() != null ? r.authorDetails().rating() : null);
+
+        String dateLabel = toSimpleDateLabel(r.createdAt());
+
+        String contentPreview = (r.content() == null) ? "" : r.content().trim();
+        if (contentPreview.length() > 420) contentPreview = contentPreview.substring(0, 420) + "…";
+
+        return new PopularReviewViewDTO(
+                r.author(),
+                username,
+                avatarInitial,
+                starsText,
+                dateLabel,
+                contentPreview,
+                r.url()
+        );
+    }
+
+    private String ratingToStars(Double rating10) {
+        if (rating10 == null) return "—";
+        // 10 -> 5 stelle: arrotondo a mezze? per ora a intere
+        int stars = (int) Math.round(rating10 / 2.0); // 0..5
+        stars = Math.max(0, Math.min(5, stars));
+
+        String full = "★★★★★";
+        String empty = "☆☆☆☆☆";
+        return full.substring(0, stars) + empty.substring(0, 5 - stars);
+    }
+
+    private String toSimpleDateLabel(String isoDateTime) {
+        if (isoDateTime == null || isoDateTime.length() < 10) return "";
+        // prende YYYY-MM-DD
+        return isoDateTime.substring(0, 10);
+    }
+
 }

@@ -1,10 +1,7 @@
 package it.unisa.fidelio.application;
 
-import it.unisa.fidelio.presentation.FilmCardDto;
-import it.unisa.fidelio.presentation.GestioneFilmRequestDTO;
-import it.unisa.fidelio.presentation.TmdbMovieDetailsDTO;
+import it.unisa.fidelio.presentation.*;
 import it.unisa.fidelio.storage.*;
-import it.unisa.fidelio.presentation.TmdbMovieDto;
 import it.unisa.fidelio.storage.api_data.TmdbMovieListResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +20,10 @@ public class FilmService {
     private final FilmRepository filmRepo;
     private final RecensioneRepository recensioneRepo;
     private final String posterBase;
+
+    private static final String BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
+    private static final String PROFILE_BASE  = "https://image.tmdb.org/t/p/w185";
+
 
     private static final Map<String, String> NOME_TO_STATO = Map.of(
             "Film Visti", "VISTO",
@@ -130,6 +131,79 @@ public class FilmService {
                 })
                 .toList();
     }
+
+    public MovieDetailsView getMovieDetailsView(Long tmdbId) {
+        TmdbMovieDetailsDTO d = tmdbClient.getMovieDetails(tmdbId);
+        TmdbMovieCreditsDTO c = tmdbClient.getMovieCredits(tmdbId);
+
+        String year = extractYear(d.releaseDate());
+        String runtimeLabel = formatRuntime(d.runtime()); // se aggiungi runtime nel DTO
+
+        String posterUrl = d.posterPath() != null ? posterBase + d.posterPath() : null;
+        String backdropUrl = d.backdropPath() != null ? BACKDROP_BASE + d.backdropPath() : null;
+
+        List<String> genreNames = (d.genres() == null) ? List.of()
+                : d.genres().stream().map(TmdbMovieDetailsDTO.TmdbGenre::name).toList();
+
+        // Directors = crew con job "Director"
+        List<MovieDetailsView.PersonView> directors = (c.crew() == null) ? List.of()
+                : c.crew().stream()
+                .filter(p -> "Director".equalsIgnoreCase(p.job()))
+                .limit(3)
+                .map(p -> new MovieDetailsView.PersonView(
+                        p.id(),
+                        p.name(),
+                        "Director",
+                        p.profilePath() != null ? PROFILE_BASE + p.profilePath() : null
+                ))
+                .toList();
+
+        // Cast top 12 ordinato per "order"
+        List<MovieDetailsView.PersonView> castTop = (c.cast() == null) ? List.of()
+                : c.cast().stream()
+                .sorted(Comparator.comparingInt(x -> x.order() == null ? Integer.MAX_VALUE : x.order()))
+                .limit(12)
+                .map(p -> new MovieDetailsView.PersonView(
+                        p.id(),
+                        p.name(),
+                        p.character() != null ? p.character() : "Cast",
+                        p.profilePath() != null ? PROFILE_BASE + p.profilePath() : null
+                ))
+                .toList();
+
+        return new MovieDetailsView(
+                d.id(),
+                d.title(),
+                d.originalTitle(),
+                year,
+                d.tagline() != null ? d.tagline() : "",
+                d.overview(),
+                d.releaseDate(),
+                runtimeLabel,
+                d.voteAverage(),
+                d.voteCount(),
+                genreNames,
+                posterUrl,
+                backdropUrl,
+                directors,
+                castTop
+        );
+
+    }
+
+    private String extractYear(String releaseDate) {
+        if (releaseDate == null || releaseDate.length() < 4) return "";
+        return releaseDate.substring(0, 4);
+    }
+
+    private String formatRuntime(Integer runtime) {
+        if (runtime == null || runtime <= 0) return "";
+        int h = runtime / 60;
+        int m = runtime % 60;
+        return h > 0 ? (h + "h " + m + "m") : (m + "m");
+    }
+
+
 
     // 6. FILM RACCOMANDATI
     public List<FilmCardDto> getFilmRaccomandati(String username) {
