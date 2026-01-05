@@ -36,7 +36,7 @@ public class Utente {
     private String email;
 
     @Column(name = "password", nullable = false)
-    private String password; // sarà salvata HASHATA con BCrypt
+    private String password; // sarà salvata HASHATA con BCryptdd
 
     @Lob
     @Column(name = "bio")

@@ -1,12 +1,8 @@
 package it.unisa.fidelio.presentation;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 public class RegistrazioneRequestDTO {
     private String username;
     private String email;
@@ -17,4 +13,7 @@ public class RegistrazioneRequestDTO {
     private String testataGiornalistica;
     private String casaProduzione;
     private String creditReference;
+
+    // Campo aggiunto per ricevere l'immagine dal frontend in formato Base64
+    private String immagineBase64;
 }
