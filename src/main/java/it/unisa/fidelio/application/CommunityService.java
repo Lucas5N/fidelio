@@ -1,9 +1,11 @@
 package it.unisa.fidelio.application;
 
 import it.unisa.fidelio.presentation.CommunityDTO;
-import it.unisa.fidelio.presentation.UtenteDTO; // Assumo esista
 import it.unisa.fidelio.storage.Community;
 import it.unisa.fidelio.storage.CommunityRepository;
+import it.unisa.fidelio.storage.Thread;
+import it.unisa.fidelio.storage.ThreadRepository;
+import it.unisa.fidelio.presentation.ThreadDTO;
 import it.unisa.fidelio.storage.Utente;
 import it.unisa.fidelio.storage.UtenteRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,11 +23,13 @@ public class CommunityService {
 
     private final CommunityRepository communityRepo;
     private final UtenteRepository utenteRepo;
+    private final ThreadRepository threadRepo;
 
     @Autowired
-    public CommunityService(CommunityRepository communityRepo, UtenteRepository utenteRepo) {
+    public CommunityService(CommunityRepository communityRepo, UtenteRepository utenteRepo, ThreadRepository threadRepo) {
         this.communityRepo = communityRepo;
         this.utenteRepo = utenteRepo;
+        this.threadRepo = threadRepo;
     }
 
 
@@ -50,7 +54,7 @@ public class CommunityService {
         community.setDescrizione(communityDTO.getDescrizione());
         community.setCreatore(creatore);
         community.setDataCreazione(Instant.now());
-        community.setNumMembri(0); // Inizialmente 0 o 1 se il creatore si iscrive in automatico
+        community.setNumMembri(1); // Inizialmente 0 o 1 se il creatore si iscrive in automatico
 
         Community saved = communityRepo.save(community);
         return mapToDTO(saved);
@@ -121,6 +125,60 @@ public class CommunityService {
             dto.setCreatoreUsername(entity.getCreatore().getUsername());
         }
 
+        return dto;
+    }
+
+    // THREADS
+
+        public List<ThreadDTO> findThreadsByCommunity(Integer communityId) {
+        if (!communityRepo.existsById(communityId)) {
+            throw new EntityNotFoundException("Community non trovata");
+        }
+        return threadRepo.findByCommunityIdOrderByDataCreazioneDesc(communityId).stream()
+                .map(this::mapThreadToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public ThreadDTO creaThread(Integer communityId, ThreadDTO threadDTO, Integer autoreId) {
+        Community community = communityRepo.findById(communityId)
+                .orElseThrow(() -> new EntityNotFoundException("Community non trovata"));
+
+        Utente autore = utenteRepo.findById(autoreId)
+                .orElseThrow(() -> new EntityNotFoundException("Utente non trovato"));
+
+        // Controllo iscrizione
+        if (!autore.getCommunitiesIscritte().contains(community)) {
+            throw new IllegalStateException("L'utente non è iscritto e non può pubblicare.");
+        }
+
+        Thread thread = new Thread();
+        thread.setTitolo(threadDTO.getTitolo());
+        thread.setContenuto(threadDTO.getContenuto());
+        thread.setDataCreazione(Instant.now());
+        thread.setNumRisposte(0);
+        thread.setCommunity(community);
+        thread.setAutore(autore);
+
+        return mapThreadToDTO(threadRepo.save(thread));
+    }
+
+    public void eliminaThread(Integer threadId) {
+        if (!threadRepo.existsById(threadId)) {
+            throw new EntityNotFoundException("Thread non trovato");
+        }
+        threadRepo.deleteById(threadId);
+    }
+
+    private ThreadDTO mapThreadToDTO(Thread entity) {
+        ThreadDTO dto = new ThreadDTO();
+        dto.setId(entity.getId());
+        dto.setTitolo(entity.getTitolo());
+        dto.setContenuto(entity.getContenuto());
+        dto.setDataCreazione(entity.getDataCreazione());
+        dto.setNumRisposte(entity.getNumRisposte());
+        dto.setAutoreUsername(entity.getAutore().getUsername());
+        dto.setCommunityId(entity.getCommunity().getId());
+        dto.setCommunityNome(entity.getCommunity().getNome());
         return dto;
     }
 }

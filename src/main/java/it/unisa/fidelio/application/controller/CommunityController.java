@@ -2,6 +2,7 @@ package it.unisa.fidelio.application.controller; // O semplicemente 'application
 
 import it.unisa.fidelio.application.CommunityService;
 import it.unisa.fidelio.presentation.CommunityDTO;
+import it.unisa.fidelio.presentation.ThreadDTO;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/community")
-@CrossOrigin(origins = "*") // Permette richieste da qualsiasi frontend (es. localhost:3000)
+@CrossOrigin(origins = "*")
 public class CommunityController {
 
     private final CommunityService communityService;
@@ -135,6 +136,57 @@ public class CommunityController {
             return ResponseEntity.ok("Disiscrizione avvenuta con successo"); // O 204 No Content
         } catch (EntityNotFoundException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+        // ==========================================
+    // ENDPOINTS PER I THREAD (Nested Resources)
+    // ==========================================
+
+    /**
+     * GET /api/community/{communityId}/threads
+     * Legge tutti i thread di quella community
+     */
+    @GetMapping("/{communityId}/threads")
+    public ResponseEntity<List<ThreadDTO>> getThreads(@PathVariable Integer communityId) {
+        try {
+            return ResponseEntity.ok(communityService.findThreadsByCommunity(communityId));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * POST /api/community/{communityId}/threads
+     * Crea un thread IN quella community
+     */
+    @PostMapping("/{communityId}/threads")
+    public ResponseEntity<?> createThread(
+            @PathVariable Integer communityId,
+            @RequestBody ThreadDTO threadDTO,
+            @RequestParam Integer autoreId) {
+        try {
+            ThreadDTO created = communityService.creaThread(communityId, threadDTO, autoreId);
+            return new ResponseEntity<>(created, HttpStatus.CREATED);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
+    /**
+     * DELETE /api/community/threads/{threadId}
+     * Elimina un thread specifico.
+     * Nota: Qui non serve l'ID della community nell'URL perché l'ID del thread è univoco.
+     */
+    @DeleteMapping("/threads/{threadId}")
+    public ResponseEntity<Void> deleteThread(@PathVariable Integer threadId) {
+        try {
+            communityService.eliminaThread(threadId);
+            return ResponseEntity.noContent().build();
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }
