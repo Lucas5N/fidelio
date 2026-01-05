@@ -42,8 +42,9 @@ public class Utente {
     @Column(name = "bio")
     private String bio;
 
-    @Column(name = "immagine_profilo")
-    private String immagineProfilo;
+    @Lob
+    @Column(name = "immagine_profilo", columnDefinition = "LONGBLOB")
+    private byte[] immagineProfilo;
 
     @Column(name = "data_registrazione")
     private Instant dataRegistrazione;
@@ -111,4 +112,6 @@ public class Utente {
 
     @OneToMany(mappedBy = "utente")
     private Set<UtenteGeneri> utenteGeneri = new LinkedHashSet<>();
+
+
 }
