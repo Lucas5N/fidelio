@@ -28,7 +28,6 @@ public class GestioneFilmController {
     public ResponseEntity<List<FilmCardDto>> ricercaFilm(
             @RequestParam String query,
             @RequestParam(defaultValue = "1") int page) {
-
         List<FilmCardDto> risultati = filmService.ricercaFilm(query, page);
         return ResponseEntity.ok(risultati);
     }
@@ -41,8 +40,10 @@ public class GestioneFilmController {
     @PostMapping("/lista")
     public ResponseEntity<String> gestisciFilmNellaLista(
             @RequestBody GestioneFilmRequestDTO request,
-            Principal principal) {  // utente autenticato
-
+            Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).body("Utente non autenticato");
+        }
         filmService.gestisciFilmNellaLista(principal.getName(), request);
         return ResponseEntity.ok("Film aggiunto/aggiornato nella tua lista con successo");
     }
@@ -53,17 +54,25 @@ public class GestioneFilmController {
      */
     @GetMapping("/miei")
     public ResponseEntity<List<FilmCardDto>> mieiFilm(Principal principal) {
-
+        if (principal == null) {
+            return ResponseEntity.status(401).body(null);
+        }
         List<FilmCardDto> mieiFilm = filmService.getMieiFilm(principal.getName());
         return ResponseEntity.ok(mieiFilm);
     }
 
     /**
-     * (Opzionale, per il futuro) Film raccomandati
+     * Film raccomandati basati sui generi dei film visti
      * GET /api/film/raccomandati
      */
     @GetMapping("/raccomandati")
     public ResponseEntity<List<FilmCardDto>> filmRaccomandati(Principal principal) {
+        if (principal == null) {
+            // Se non loggato, restituisci popolari
+            List<FilmCardDto> popolari = filmService.getFilmPopolari(1);
+            return ResponseEntity.ok(popolari);
+        }
+
         List<FilmCardDto> raccomandati = filmService.getFilmRaccomandati(principal.getName());
         return ResponseEntity.ok(raccomandati);
     }

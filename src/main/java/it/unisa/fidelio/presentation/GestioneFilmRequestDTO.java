@@ -1,7 +1,13 @@
 package it.unisa.fidelio.presentation;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDate;
+@Setter
+@Getter
 public class GestioneFilmRequestDTO {
 
+    // Getter e Setter
     private Long tmdbId;
 
     private String stato;  // "VISTO", "DA_VEDERE", "PREFERITO"
@@ -18,28 +24,4 @@ public class GestioneFilmRequestDTO {
         this.dataVisione = dataVisione;
     }
 
-    // Getter e Setter
-    public Long getTmdbId() {
-        return tmdbId;
-    }
-
-    public void setTmdbId(Long tmdbId) {
-        this.tmdbId = tmdbId;
-    }
-
-    public String getStato() {
-        return stato;
-    }
-
-    public void setStato(String stato) {
-        this.stato = stato;
-    }
-
-    public LocalDate getDataVisione() {
-        return dataVisione;
-    }
-
-    public void setDataVisione(LocalDate dataVisione) {
-        this.dataVisione = dataVisione;
-    }
 }

@@ -14,7 +14,7 @@ public class HomeController {
         this.homeService = homeService;
     }
 
-    @GetMapping("/")
+    @GetMapping({"/", "/home"})
     public String home(Model model) {
         model.addAttribute("popularFilms", homeService.getPopularCards(4));
         model.addAttribute("newReleases", homeService.getNewReleaseCards(4));

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<header class="topnav" th:fragment="navbar">
+  <div class="nav-inner">
+    <!-- Left: logo -->
+    <a th:href="@{/}" class="nav-logo nav-logo--img">
+      <img src="/images/logo-removebg-preview.png" alt="Fidelio" />
+    </a>
+
+    <!-- Center: links -->
+    <nav class="nav-center" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      <!-- VISIBILE SOLO SE NON SEI LOGGATO -->
+      <div sec:authorize="isAnonymous()">
+        <a class="nav-item" th:href="@{/login}">login</a>
+        <a class="nav-item" th:href="@{/signup}">Create account</a>
+      </div>
+
+      <!-- VISIBILE SOLO SE SEI LOGGATO -->
+      <div sec:authorize="isAuthenticated()">
+        <a class="nav-item" th:href="@{/diary}">Diary</a>
+        <a class="nav-item" th:href="@{/profile}">Profile</a>
+      </div>
+
+      <a class="nav-item" th:href="@{/movies}">Films</a>
+      <a class="nav-item" th:href="@{/lists}">Lists</a>
+    </nav>
+
+    <!-- Right: search -->
+    <form class="nav-search" th:action="@{/search}" method="get" role="search">
+      <input
+              class="nav-search-input"
+              type="search"
+              name="q"
+              placeholder="Search films..."
+              autocomplete="off"
+              aria-label="Search films"
+      />
+      <button class="nav-search-btn" type="submit" aria-label="Search">
+        ⌕
+      </button>
+    </form>
+  </div>
+</header>
+
+</body>
+</html>

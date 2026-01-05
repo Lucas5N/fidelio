@@ -1,18 +1,14 @@
 package it.unisa.fidelio.application;
 
-import it.unisa.fidelio.application.GenreService;
-import it.unisa.fidelio.application.TmdbClient;
-import it.unisa.fidelio.presentation.FilmCardDto;
-import it.unisa.fidelio.presentation.GestioneFilmRequestDTO;
-import it.unisa.fidelio.presentation.TmdbMovieDto;
-import it.unisa.fidelio.storage.ListaPrivata;
-import it.unisa.fidelio.storage.ListaPrivataRepository;
-import it.unisa.fidelio.storage.UtenteRepository;
+import it.unisa.fidelio.presentation.*;
+import it.unisa.fidelio.storage.*;
+import it.unisa.fidelio.storage.api_data.TmdbMovieListResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
@@ -21,9 +17,14 @@ public class FilmService {
     private final GenreService genreService;
     private final ListaPrivataRepository listaPrivataRepo;
     private final UtenteRepository utenteRepo;
+    private final FilmRepository filmRepo;
+    private final RecensioneRepository recensioneRepo;
     private final String posterBase;
 
-    // Mappa nome lista → stato corrispondente
+    private static final String BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
+    private static final String PROFILE_BASE  = "https://image.tmdb.org/t/p/w185";
+
+
     private static final Map<String, String> NOME_TO_STATO = Map.of(
             "Film Visti", "VISTO",
             "Da Vedere", "DA_VEDERE",
@@ -34,33 +35,53 @@ public class FilmService {
                        GenreService genreService,
                        ListaPrivataRepository listaPrivataRepo,
                        UtenteRepository utenteRepo,
+                       FilmRepository filmRepo,
+                       RecensioneRepository recensioneRepo,
                        @Value("${tmdb.poster-base}") String posterBase) {
         this.tmdbClient = tmdbClient;
         this.genreService = genreService;
         this.listaPrivataRepo = listaPrivataRepo;
         this.utenteRepo = utenteRepo;
+        this.filmRepo = filmRepo;
+        this.recensioneRepo = recensioneRepo;
         this.posterBase = posterBase;
     }
 
-
-    // ===================================================================
     // 1. RICERCA FILM SU TMDB
-    // ===================================================================
     public List<FilmCardDto> ricercaFilm(String query, int page) {
-        var response = tmdbClient.searchMovies(query, page);
+        TmdbMovieListResponse response = tmdbClient.searchMovies(query, page);
         Map<Integer, String> genreMap = genreService.getGenreMap();
-
         return response.results().stream()
                 .map(movieDto -> toFilmCardDto(movieDto, genreMap))
                 .toList();
     }
 
-    // ===================================================================
-    // 2. AGGIUNGI / AGGIORNA FILM NELLA LISTA PERSONALE
-    // ===================================================================
+    // 2. FILM POPOLARI E NOW PLAYING
+    public List<FilmCardDto> getFilmPopolari(int page) {
+        TmdbMovieListResponse response = tmdbClient.getPopular(page);
+        Map<Integer, String> genreMap = genreService.getGenreMap();
+        return response.results().stream()
+                .map(movieDto -> toFilmCardDto(movieDto, genreMap))
+                .toList();
+    }
+
+    public List<FilmCardDto> getNowPlaying(int page) {
+        TmdbMovieListResponse response = tmdbClient.getNowPlaying(page);
+        Map<Integer, String> genreMap = genreService.getGenreMap();
+        return response.results().stream()
+                .map(movieDto -> toFilmCardDto(movieDto, genreMap))
+                .toList();
+    }
+
+    // 3. DETTAGLI COMPLETI DI UN FILM (usa TmdbMovieDetailsDTO)
+    public TmdbMovieDetailsDTO getDettagliFilm(Long tmdbId, Utente utenteLoggato) {
+        return tmdbClient.getMovieDetails(tmdbId);
+    }
+
+    // 4. GESTIONE LISTE PERSONALI
     @Transactional
     public void gestisciFilmNellaLista(String username, GestioneFilmRequestDTO request) {
-        var utente = utenteRepo.findByUsername(username)
+        Utente utente = utenteRepo.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Utente non trovato"));
 
         String statoRichiesto = request.getStato().toUpperCase();
@@ -76,31 +97,21 @@ public class FilmService {
                 .orElseThrow(() -> new IllegalStateException("Lista predefinita mancante: " + nomeLista));
 
         Long tmdbId = request.getTmdbId();
-
-        // Aggiungi sempre il tmdbId alla lista
         lista.getTmdbIds().add(tmdbId);
 
-        // Gestisci data visione (solo per "Film Visti")
-        if ("VISTO".equals(statoRichiesto)) {
-            if (request.getDataVisione() != null) {
-                lista.getDataVisioneTmdb().put(tmdbId, request.getDataVisione());
-            }
+        if ("VISTO".equals(statoRichiesto) && request.getDataVisione() != null) {
+            lista.getDataVisioneTmdb().put(tmdbId, request.getDataVisione());
         } else {
-            // Rimuovi eventuale data visione se sposto da "Visti" a altra lista
             lista.getDataVisioneTmdb().remove(tmdbId);
         }
 
         listaPrivataRepo.save(lista);
     }
 
-    // ===================================================================
-    // 3. RECUPERA TUTTI I FILM DELL'UTENTE (dalle 3 liste speciali)
-    // ===================================================================
+    // 5. RECUPERO "I MIEI FILM"
     public List<FilmCardDto> getMieiFilm(String username) {
         List<ListaPrivata> liste = listaPrivataRepo.findByProprietarioUsernameAndNomeIn(
-                username,
-                List.of("Film Visti", "Da Vedere", "Preferiti")
-        );
+                username, List.of("Film Visti", "Da Vedere", "Preferiti"));
 
         Set<Long> tuttiTmdbId = new HashSet<>();
         for (ListaPrivata lista : liste) {
@@ -115,32 +126,128 @@ public class FilmService {
 
         return tuttiTmdbId.stream()
                 .map(tmdbId -> {
-                    var movieDto = tmdbClient.getMovieDetails(tmdbId);
-                    return toFilmCardDto(movieDto, genreMap);
+                    TmdbMovieDetailsDTO detailsDto = tmdbClient.getMovieDetails(tmdbId);
+                    return toFilmCardDto(detailsDto, genreMap);
                 })
                 .toList();
     }
 
-    // ===================================================================
-    // 4. (Opzionale futuro) RACCOMANDATI
-    // ===================================================================
-    public List<FilmCardDto> getFilmRaccomandati(String username) {
-        // TODO: implementare FRA quando sarà il momento
-        return List.of();
+    public MovieDetailsView getMovieDetailsView(Long tmdbId) {
+        TmdbMovieDetailsDTO d = tmdbClient.getMovieDetails(tmdbId);
+        TmdbMovieCreditsDTO c = tmdbClient.getMovieCredits(tmdbId);
+
+        String year = extractYear(d.releaseDate());
+        String runtimeLabel = formatRuntime(d.runtime()); // se aggiungi runtime nel DTO
+
+        String posterUrl = d.posterPath() != null ? posterBase + d.posterPath() : null;
+        String backdropUrl = d.backdropPath() != null ? BACKDROP_BASE + d.backdropPath() : null;
+
+        List<String> genreNames = (d.genres() == null) ? List.of()
+                : d.genres().stream().map(TmdbMovieDetailsDTO.TmdbGenre::name).toList();
+
+        // Directors = crew con job "Director"
+        List<MovieDetailsView.PersonView> directors = (c.crew() == null) ? List.of()
+                : c.crew().stream()
+                .filter(p -> "Director".equalsIgnoreCase(p.job()))
+                .limit(3)
+                .map(p -> new MovieDetailsView.PersonView(
+                        p.id(),
+                        p.name(),
+                        "Director",
+                        p.profilePath() != null ? PROFILE_BASE + p.profilePath() : null
+                ))
+                .toList();
+
+        // Cast top 12 ordinato per "order"
+        List<MovieDetailsView.PersonView> castTop = (c.cast() == null) ? List.of()
+                : c.cast().stream()
+                .sorted(Comparator.comparingInt(x -> x.order() == null ? Integer.MAX_VALUE : x.order()))
+                .limit(12)
+                .map(p -> new MovieDetailsView.PersonView(
+                        p.id(),
+                        p.name(),
+                        p.character() != null ? p.character() : "Cast",
+                        p.profilePath() != null ? PROFILE_BASE + p.profilePath() : null
+                ))
+                .toList();
+
+        return new MovieDetailsView(
+                d.id(),
+                d.title(),
+                d.originalTitle(),
+                year,
+                d.tagline() != null ? d.tagline() : "",
+                d.overview(),
+                d.releaseDate(),
+                runtimeLabel,
+                d.voteAverage(),
+                d.voteCount(),
+                genreNames,
+                posterUrl,
+                backdropUrl,
+                directors,
+                castTop
+        );
+
     }
 
-    // ===================================================================
-    // METODO PRIVATO DI MAPPING (riutilizzato da HomeService)
-    // ===================================================================
+    private String extractYear(String releaseDate) {
+        if (releaseDate == null || releaseDate.length() < 4) return "";
+        return releaseDate.substring(0, 4);
+    }
+
+    private String formatRuntime(Integer runtime) {
+        if (runtime == null || runtime <= 0) return "";
+        int h = runtime / 60;
+        int m = runtime % 60;
+        return h > 0 ? (h + "h " + m + "m") : (m + "m");
+    }
+
+
+
+    // 6. FILM RACCOMANDATI
+    public List<FilmCardDto> getFilmRaccomandati(String username) {
+        Optional<ListaPrivata> listaVistiOpt = listaPrivataRepo
+                .findByProprietarioUsernameAndNome(username, "Film Visti");
+
+        if (listaVistiOpt.isEmpty() || listaVistiOpt.get().getTmdbIds().isEmpty()) {
+            return getFilmPopolari(1);
+        }
+
+        Set<Long> filmVistiTmdbIds = listaVistiOpt.get().getTmdbIds();
+
+        Set<Integer> generiPreferiti = new HashSet<>();
+        Map<Integer, String> genreMap = genreService.getGenreMap();
+
+        for (Long tmdbId : filmVistiTmdbIds) {
+            TmdbMovieDetailsDTO details = tmdbClient.getMovieDetails(tmdbId);
+            details.genres().stream()
+                    .map(TmdbMovieDetailsDTO.TmdbGenre::id)
+                    .forEach(generiPreferiti::add);
+        }
+
+        if (generiPreferiti.isEmpty()) {
+            return getFilmPopolari(1);
+        }
+
+        List<FilmCardDto> popolari = getFilmPopolari(1);
+
+        return popolari.stream()
+                .filter(card -> card.genreIds() != null && card.genreIds().stream().anyMatch(generiPreferiti::contains))
+                .limit(20)
+                .toList();
+    }
+
+    // MAPPING PRIVATO
     private FilmCardDto toFilmCardDto(TmdbMovieDto m, Map<Integer, String> genreMap) {
         Integer year = null;
         if (m.releaseDate() != null && m.releaseDate().length() >= 4) {
             year = Integer.parseInt(m.releaseDate().substring(0, 4));
         }
 
-        String posterUrl = (m.posterPath() == null) ? null : posterBase + m.posterPath();
+        String posterUrl = m.posterPath() == null ? null : posterBase + m.posterPath();
 
-        List<String> genreNames = (m.genreIds() == null || m.genreIds().isEmpty())
+        List<String> genreNames = m.genreIds() == null || m.genreIds().isEmpty()
                 ? List.of()
                 : m.genreIds().stream()
                 .map(id -> genreMap.getOrDefault(id, "Sconosciuto"))
@@ -153,6 +260,28 @@ public class FilmService {
                 m.voteAverage(),
                 posterUrl,
                 m.genreIds() == null ? List.of() : m.genreIds(),
+                genreNames
+        );
+    }
+
+    private FilmCardDto toFilmCardDto(TmdbMovieDetailsDTO m, Map<Integer, String> genreMap) {
+        Integer year = null;
+        if (m.releaseDate() != null && m.releaseDate().length() >= 4) {
+            year = Integer.parseInt(m.releaseDate().substring(0, 4));
+        }
+
+        String posterUrl = m.posterPath() != null ? posterBase + m.posterPath() : null;
+
+        List<Integer> genreIds = m.genres().stream().map(TmdbMovieDetailsDTO.TmdbGenre::id).toList();
+        List<String> genreNames = m.genres().stream().map(TmdbMovieDetailsDTO.TmdbGenre::name).toList();
+
+        return new FilmCardDto(
+                m.id(),
+                m.title(),
+                year,
+                m.voteAverage(),
+                posterUrl,
+                genreIds,
                 genreNames
         );
     }

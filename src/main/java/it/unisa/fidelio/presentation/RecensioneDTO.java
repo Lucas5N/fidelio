@@ -2,13 +2,16 @@ package it.unisa.fidelio.presentation;
 
 import java.time.Instant;
 
-public class RecensioneDTO {
-    private Integer id;
-    private String nomeAutore;
-    private String testo;
-    private Double voto;
-    private Instant dataCreazione;
-    private Boolean spoilerAlert;
-    private Integer numLike;
-    private Integer numDislike;
-}
+public record RecensioneDTO(
+        Integer id,
+        String testo,
+        Double voto,
+        Instant dataCreazione,
+        boolean spoilerAlert,
+        Integer numLike,
+        Integer numDislike,
+        String usernameAutore,
+        String titoloFilm,
+        Long filmTmdbId  // per link a dettagli TMDB
+) {}
+

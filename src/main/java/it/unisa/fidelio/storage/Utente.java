@@ -26,6 +26,12 @@ public class Utente {
     @Column(name = "username", nullable = false, length = 100, unique = true)
     private String username;
 
+    @Column(name = "nome", nullable = false)
+    private String nome;
+
+    @Column(name = "cognome", nullable = false)
+    private String cognome;
+
     @Column(name = "email", nullable = false, length = 100, unique = true)
     private String email;
 
