@@ -21,38 +21,7 @@
 <body>
 <div class="page">
 
-    <!-- NAVBAR (transparent) -->
-    <header class="topnav">
-        <div class="nav-inner">
-            <!-- Left: logo -->
-            <a th:href="@{/}" class="nav-logo nav-logo--img">
-                <img src="/images/logo-removebg-preview.png" alt="Fidelio" />
-            </a>
-
-            <!-- Center: links -->
-            <nav class="nav-center">
-                <a class="nav-item" th:href="@{/login}">login</a>
-                <a class="nav-item" th:href="@{/signup}">Create account</a>
-                <a class="nav-item" th:href="@{/movies}">Films</a>
-                <a class="nav-item" th:href="@{/lists}">Lists</a>
-            </nav>
-
-            <!-- Right: search -->
-            <form class="nav-search" th:action="@{/search}" method="get" role="search">
-                <input
-                        class="nav-search-input"
-                        type="search"
-                        name="q"
-                        placeholder="Search films..."
-                        autocomplete="off"
-                        aria-label="Search films"
-                />
-                <button class="nav-search-btn" type="submit" aria-label="Search">
-                    ⌕
-                </button>
-            </form>
-        </div>
-    </header>
+    <div th:replace="fragments/navbar :: navbar"></div>
 
     <!-- HERO (with background image) -->
     <section class="hero hero--collage">
