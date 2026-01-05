@@ -7,6 +7,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" th:href="@{/css/home.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}">
 
     <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png?v=3">
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png?v=3">
@@ -20,38 +21,7 @@
 <body>
 <div class="page">
 
-    <!-- NAVBAR (transparent) -->
-    <header class="topnav">
-        <div class="nav-inner">
-            <!-- Left: logo -->
-            <a th:href="@{/}" class="nav-logo nav-logo--img">
-                <img src="/images/logo-removebg-preview.png" alt="Fidelio" />
-            </a>
-
-            <!-- Center: links -->
-            <nav class="nav-center">
-                <a class="nav-item" th:href="@{/signin}">Sign in</a>
-                <a class="nav-item" th:href="@{/signup}">Create account</a>
-                <a class="nav-item" th:href="@{/movies}">Films</a>
-                <a class="nav-item" th:href="@{/lists}">Lists</a>
-            </nav>
-
-            <!-- Right: search -->
-            <form class="nav-search" th:action="@{/search}" method="get" role="search">
-                <input
-                        class="nav-search-input"
-                        type="search"
-                        name="q"
-                        placeholder="Search films..."
-                        autocomplete="off"
-                        aria-label="Search films"
-                />
-                <button class="nav-search-btn" type="submit" aria-label="Search">
-                    ⌕
-                </button>
-            </form>
-        </div>
-    </header>
+    <div th:replace="fragments/navbar :: navbar"></div>
 
     <!-- HERO (with background image) -->
     <section class="hero hero--collage">
@@ -472,8 +442,12 @@
 
     </main>
 
+    <div th:replace="fragments/footer :: footer"></div>
+
 </div>
 
-<script th:src="@{/js/home.js}"></script>
+<script th:src="@{/js/home.js}">
+
+</script>
 </body>
 </html>
