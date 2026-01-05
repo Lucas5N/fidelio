@@ -14,3 +14,4 @@ public record RecensioneDTO(
         String titoloFilm,
         Long filmTmdbId  // per link a dettagli TMDB
 ) {}
+
