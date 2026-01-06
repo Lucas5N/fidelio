@@ -18,39 +18,35 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            color: white;
         }
 
-        /* Navbar compatta auth */
         .signup-page .nav-inner { height: 64px; }
-        .signup-page .nav-logo--img img {
-            height: 56px;
-            transform: none;
-            filter: none;
-        }
-
+        .signup-page .nav-logo--img img { height: 56px; }
         .topnav { flex-shrink: 0; }
 
         .main-wrapper {
             flex: 1;
-            padding: 24px 20px 48px;
+            padding: 32px 20px 64px;
             display: flex;
             justify-content: center;
             align-items: flex-start;
         }
 
         .panel {
-            max-width: 960px;
+            max-width: 850px;
             width: 100%;
-            padding: 48px 40px;
-            border-radius: var(--radius);
-            background: var(--panel);
-            border: 1px solid var(--stroke-2);
-            box-shadow: var(--shadow);
-            animation: fadeIn .4s ease;
+            padding: 40px;
+            border-radius: 16px;
+            background: rgba(20, 20, 30, 0.92);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: fadeIn .5s ease-out;
+            backdrop-filter: blur(10px);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -58,58 +54,167 @@
             text-align: center;
             margin-bottom: 32px;
             font-size: 32px;
+            font-weight: 600;
         }
 
-        /* resto del tuo CSS invariato */
-        .tier-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:40px; }
-        .tier-card { padding:24px 16px; border:2px solid var(--stroke-2); border-radius:var(--radius); cursor:pointer; background:var(--panel-2); transition:.3s; text-align:center; }
-        .tier-card.selected { border-color:var(--accent); background:rgba(240,106,42,.12); }
-        .tier-card h3 { font-size:20px; margin-bottom:10px; }
-        .tier-card ul { font-size:13px; color:var(--muted); margin-top:15px; }
-
-        .name-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-        .field { margin-bottom:20px; }
-
-        label { font-size:14px; color:var(--muted); margin-bottom:8px; display:block; }
-
-        input {
-            width:100%;
-            height:52px;
-            background:var(--panel-2);
-            border:1px solid var(--stroke-2);
-            border-radius:var(--radius);
-            color:white;
-            padding:0 16px;
+        /* --- TIER CARDS ORIZZONTALI --- */
+        .tier-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 40px;
         }
 
-        input:focus { border-color:var(--accent); outline:none; }
+        .tier-card {
+            padding: 16px 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.03);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
+        }
 
+        .tier-card:hover {
+            background: rgba(255,255,255,0.07);
+            transform: translateX(5px);
+        }
+
+        .tier-card.selected {
+            border-color: #f06a2a;
+            background: rgba(240,106,42,0.1);
+            box-shadow: 0 4px 15px rgba(240,106,42,0.1);
+        }
+
+        .tier-info {
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tier-card h3 {
+            font-size: 18px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-badge { width: 20px; height: 20px; flex-shrink: 0; }
+        .verified-blue { fill: #3897f0; }
+        .troupe-gold { fill: #ffcc00; }
+
+        .price {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .tier-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 0 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            flex-grow: 1;
+            border-left: 1px solid rgba(255,255,255,0.1);
+            padding-left: 24px;
+        }
+
+        .tier-card ul li {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            display: flex;
+            align-items: center;
+        }
+
+        .tier-card ul li::before {
+            content: "•";
+            color: #f06a2a;
+            margin-right: 6px;
+            font-weight: bold;
+        }
+
+        /* --- FORM STYLES --- */
+        .name-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .field { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: 14px; color: rgba(255,255,255,0.7); }
+
+        input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
+            width: 100%; height: 50px;
+            background: rgba(30,30,40,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: white; padding: 0 16px; font-size: 15px; box-sizing: border-box;
+        }
+
+        input:focus { outline: none; border-color: #f06a2a; }
+
+        .extra-fields {
+            max-height: 0; opacity: 0; overflow: hidden;
+            transition: all 0.4s ease;
+        }
+        .extra-fields.visible {
+            max-height: 300px; opacity: 1; margin-top: 10px; padding: 15px 0;
+        }
+
+        button[type="submit"] {
+            width: 100%; height: 56px;
+            background: #f06a2a; color: white; border: none; border-radius: 12px;
+            font-size: 17px; font-weight: 600; cursor: pointer; margin-top: 20px;
+        }
+
+        /* --- LOGIN SECTION (BOTTONE BIANCO) --- */
         .login-link-section {
-            margin-top:32px;
-            padding-top:24px;
-            border-top:1px solid rgba(255,255,255,.06);
-            text-align:center;
+            margin-top: 32px;
+            padding-top: 32px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.08);
         }
 
-        .btn-secondary {
-            display:block;
-            width:100%;
-            padding:14px;
-            border-radius:var(--radius);
-            border:1px solid var(--stroke-2);
-            background:rgba(255,255,255,.04);
-            color:var(--text);
-            text-decoration:none;
-            font-weight:600;
+        .login-link-section p {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 16px;
         }
 
-        @media (max-width:850px){
-            .tier-grid { grid-template-columns:1fr; }
-            .name-row { grid-template-columns:1fr; }
+        .btn-white {
+            display: inline-block;
+            background: white;
+            color: #14141e; /* Colore scuro del background per contrasto */
+            padding: 12px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            border: 1px solid white;
+        }
+
+        .btn-white:hover {
+            background: rgba(255,255,255,0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .tier-card { flex-direction: column; align-items: flex-start; }
+            .tier-card ul { margin: 12px 0 0 0; padding: 12px 0 0 0; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
+            .name-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body class="signup-page">
+
 <header class="topnav">
     <div class="nav-inner">
         <a th:href="@{/}" class="nav-logo nav-logo--img">
@@ -124,29 +229,47 @@
 
         <div class="tier-grid">
             <div class="tier-card selected" data-tier="Cinefilo">
-                <h3>Cinefilo</h3>
-                <div class="price">Gratuito</div>
+                <div class="tier-info">
+                    <h3>Cinefilo</h3>
+                    <div class="price">Appassionato</div>
+                </div>
                 <ul>
                     <li>Traccia i film visti</li>
                     <li>Recensisci e vota</li>
-                    <li>Crea liste personali</li>
+                    <li>Liste personali</li>
                 </ul>
             </div>
+
             <div class="tier-card" data-tier="Critico">
-                <h3>Critico</h3>
-                <div class="price">Profilo Verificato</div>
+                <div class="tier-info">
+                    <h3>
+                        Critico
+                        <svg class="icon-badge verified-blue" viewBox="0 0 24 24">
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7l-3.3-3.3 1.4-1.4 1.9 1.9 4.6-4.6 1.4 1.4-6 6z"/>
+                        </svg>
+                    </h3>
+                    <div class="price">Profilo Verificato</div>
+                </div>
                 <ul>
                     <li>Recensioni in evidenza</li>
-                    <li>Badge critico esperto</li>
-                    <li>Creazione discussioni</li>
+                    <li>Badge esperto</li>
+                    <li>Discussioni</li>
                 </ul>
             </div>
+
             <div class="tier-card" data-tier="Fedele">
-                <h3>Fedele</h3>
-                <div class="price">Community Leader</div>
+                <div class="tier-info">
+                    <h3>
+                        Fedele
+                        <svg class="icon-badge troupe-gold" viewBox="0 0 24 24">
+                            <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                        </svg>
+                    </h3>
+                    <div class="price">Membro della Troupe</div>
+                </div>
                 <ul>
-                    <li>Crea e gestisci community</li>
-                    <li>Strumenti moderazione</li>
+                    <li>Gestisci community</li>
+                    <li>Moderazione</li>
                     <li>Eventi esclusivi</li>
                 </ul>
             </div>
@@ -158,66 +281,68 @@
             <div class="name-row">
                 <div class="field">
                     <label>Nome</label>
-                    <input type="text" id="nome" required placeholder="Es. Mario">
+                    <input type="text" id="nome" required placeholder="Mario">
                 </div>
                 <div class="field">
                     <label>Cognome</label>
-                    <input type="text" id="cognome" required placeholder="Es. Rossi">
+                    <input type="text" id="cognome" required placeholder="Rossi">
                 </div>
             </div>
 
             <div class="field">
                 <label>Username</label>
-                <input type="text" id="username" required>
+                <input type="text" id="username" required placeholder="Scegli un username unico">
             </div>
 
             <div class="field">
                 <label>Email</label>
-                <input type="email" id="email" required>
+                <input type="email" id="email" required placeholder="tuo@email.com">
             </div>
 
             <div class="field">
                 <label>Password</label>
-                <input type="password" id="password" required minlength="8">
+                <input type="password" id="password" required minlength="8" placeholder="Minimo 8 caratteri">
             </div>
 
             <div class="field">
                 <label>Foto Profilo (Opzionale)</label>
-                <input type="file" id="fotoInput" accept="image/*" style="border:none; background:transparent; padding:10px 0;">
+                <input type="file" id="fotoInput" accept="image/*" style="color: #888; font-size: 13px;">
             </div>
 
             <div id="critico-fields" class="extra-fields">
-                <label>Testata giornalistica</label>
-                <input type="text" id="testata">
+                <div class="field">
+                    <label>Testata giornalistica</label>
+                    <input type="text" id="testata" placeholder="Es. Il Corriere della Sera">
+                </div>
             </div>
 
             <div id="fedele-fields" class="extra-fields">
-                <label>Casa di produzione</label>
-                <input type="text" id="casa" style="margin-bottom:15px;">
-                <label>Link Portfolio / IMDB</label>
-                <input type="url" id="credit">
+                <div class="field">
+                    <label>Casa di produzione</label>
+                    <input type="text" id="casa" placeholder="Es. Warner Bros">
+                </div>
+                <div class="field">
+                    <label>Link Portfolio / IMDB</label>
+                    <input type="url" id="credit" placeholder="https://www.imdb.com/...">
+                </div>
             </div>
 
-            <div id="signup-error">Compila correttamente tutti i campi</div>
+            <div id="signup-error" style="display:none; color:#ff6b6b; margin-bottom:20px; text-align:center;"></div>
 
-            <button type="submit"
-                    style="width: 100%; height: 56px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-weight: 600; margin-top: 10px; cursor: pointer;">
-                Registrati
-            </button>
+            <button type="submit">Registrati</button>
         </form>
 
         <div class="login-link-section">
             <p>Hai già un account?</p>
-            <a th:href="@{/login}" class="btn-secondary">Accedi ora</a>
+            <a th:href="@{/login}" class="btn-white">Accedi ora</a>
         </div>
     </section>
 </div>
+
 <script>
     const signupForm = document.getElementById("signupForm");
     const errorMsg = document.getElementById("signup-error");
-    const allInputs = signupForm.querySelectorAll('input');
 
-    // Funzione per convertire file in Base64
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -225,7 +350,6 @@
         reader.onerror = error => reject(error);
     });
 
-    // Gestione selezione tier
     document.querySelectorAll('.tier-card').forEach(card => {
         card.addEventListener('click', () => {
             document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
@@ -238,33 +362,16 @@
         });
     });
 
-    // Rimuovi errori durante la digitazione
-    allInputs.forEach(input => {
-        input.addEventListener('input', () => {
-            errorMsg.style.display = "none";
-            input.classList.remove("error-border");
-        });
-    });
-
-    // Submit form
     signupForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         errorMsg.style.display = "none";
 
-        // Converti foto in Base64
-        const fotoFile = document.getElementById('fotoInput').files[0];
         let fotoBase64 = null;
+        const fotoFile = document.getElementById('fotoInput').files[0];
         if (fotoFile) {
-            try {
-                fotoBase64 = await toBase64(fotoFile);
-            } catch (err) {
-                errorMsg.innerText = "Errore con la foto profilo";
-                errorMsg.style.display = "block";
-                return;
-            }
+            try { fotoBase64 = await toBase64(fotoFile); } catch (err) { }
         }
 
-        // Costruisci payload
         const tier = document.getElementById('dtype').value;
         const payload = {
             nome: document.getElementById('nome').value.trim(),
@@ -273,9 +380,9 @@
             email: document.getElementById('email').value.trim(),
             password: document.getElementById('password').value,
             dtype: tier,
-            testataGiornalistica: tier === 'Critico' ? document.getElementById('testata').value.trim() || null : null,
-            casaProduzione: tier === 'Fedele' ? document.getElementById('casa').value.trim() || null : null,
-            creditReference: tier === 'Fedele' ? document.getElementById('credit').value.trim() || null : null,
+            testataGiornalistica: tier === 'Critico' ? document.getElementById('testata').value.trim() : null,
+            casaProduzione: tier === 'Fedele' ? document.getElementById('casa').value.trim() : null,
+            creditReference: tier === 'Fedele' ? document.getElementById('credit').value.trim() : null,
             immagineBase64: fotoBase64
         };
 
@@ -287,16 +394,14 @@
             });
 
             if (response.ok) {
-                // Registrazione e login automatico completati sul server
-                // Redirect diretto a home (sessione già attiva)
                 window.location.href = "/home";
             } else {
-                const errorText = await response.text();
-                errorMsg.innerText = errorText || "Errore durante la registrazione";
+                const text = await response.text();
+                errorMsg.innerText = text || "Errore durante la registrazione.";
                 errorMsg.style.display = "block";
             }
         } catch (err) {
-            errorMsg.innerText = "Impossibile collegarsi al server";
+            errorMsg.innerText = "Errore di connessione.";
             errorMsg.style.display = "block";
         }
     });
