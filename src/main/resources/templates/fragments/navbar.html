@@ -1,48 +1,66 @@
 <!doctype html>
 <html lang="it" xmlns:th="http://www.thymeleaf.org"
-xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8" />
+</head>
+
 <body>
 
 <header class="topnav" th:fragment="navbar">
-  <div class="nav-inner">
-    <!-- Left: logo -->
-    <a th:href="@{/}" class="nav-logo nav-logo--img">
-      <img src="/images/logo-removebg-preview.png" alt="Fidelio" />
-    </a>
+    <div class="nav-inner">
+        <!-- Left: logo -->
+        <a th:href="@{/}" class="nav-logo nav-logo--img">
+            <img src="/images/logo-removebg-preview.png" alt="Fidelio" />
+        </a>
 
-    <!-- Center: links -->
-    <nav class="nav-center" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-      <!-- VISIBILE SOLO SE NON SEI LOGGATO -->
-      <div sec:authorize="isAnonymous()">
-        <a class="nav-item" th:href="@{/login}">login</a>
-        <a class="nav-item" th:href="@{/signup}">Create account</a>
-      </div>
+        <!-- Center: links -->
+        <nav class="nav-center">
+            <!-- Link sempre visibili -->
+            <a class="nav-item" th:href="@{/movies}">Films</a>
+            <a class="nav-item" th:href="@{/lists}">Lists</a>
 
-      <!-- VISIBILE SOLO SE SEI LOGGATO -->
-      <div sec:authorize="isAuthenticated()">
-        <a class="nav-item" th:href="@{/diary}">Diary</a>
-        <a class="nav-item" th:href="@{/profile}">Profile</a>
-      </div>
+            <!-- OSPITE (non loggato) -->
+            <a class="nav-item" sec:authorize="!isAuthenticated()" th:href="@{/login}">Login</a>
+            <a class="nav-item" sec:authorize="!isAuthenticated()" th:href="@{/signup}">Create account</a>
 
-      <a class="nav-item" th:href="@{/movies}">Films</a>
-      <a class="nav-item" th:href="@{/lists}">Lists</a>
-    </nav>
+            <!-- UTENTE LOGGATO -->
+            <a class="nav-item" sec:authorize="isAuthenticated()" th:href="@{/diary}">Diary</a>
 
-    <!-- Right: search -->
-    <form class="nav-search" th:action="@{/search}" method="get" role="search">
-      <input
-              class="nav-search-input"
-              type="search"
-              name="q"
-              placeholder="Search films..."
-              autocomplete="off"
-              aria-label="Search films"
-      />
-      <button class="nav-search-btn" type="submit" aria-label="Search">
-        ⌕
-      </button>
-    </form>
-  </div>
+            <a class="nav-item nav-item--profile"
+               sec:authorize="isAuthenticated()"
+               th:href="@{/profile/{id}(id=${#authentication.principal.utente.id})}">
+
+                <!-- Avatar -->
+                <img th:if="${#authentication.principal.utente.immagineProfilo != null}"
+                     th:src="@{'data:image/jpeg;base64,' + ${@utenteService.encodeToBase64(#authentication.principal.utente.immagineProfilo)}}"
+                     alt="Avatar"
+                     class="nav-avatar">
+
+                <img th:unless="${#authentication.principal.utente.immagineProfilo != null}"
+                     src="/images/default-avatar.png"
+                     alt="Avatar"
+                     class="nav-avatar">
+
+                <!-- Username -->
+                <span th:text="${#authentication.principal.utente.username}">User</span>
+            </a>
+
+            <!-- Logout -->
+            <form th:action="@{/logout}" method="post" class="nav-logout-form" sec:authorize="isAuthenticated()">
+                <button type="submit" class="nav-item nav-item--logout">
+                    Esci
+                </button>
+            </form>
+        </nav>
+
+        <!-- Right: search -->
+        <form class="nav-search" th:action="@{/search}" method="get" role="search">
+            <input class="nav-search-input" type="search" name="q" placeholder="Search films..." autocomplete="off" />
+            <button class="nav-search-btn" type="submit">⌕</button>
+        </form>
+    </div>
 </header>
 
 </body>

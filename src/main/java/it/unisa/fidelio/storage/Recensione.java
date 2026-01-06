@@ -11,11 +11,14 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+// src/main/java/it/unisa/fidelio/storage/Recensione.java
+
 @Getter
 @Setter
 @Entity
 @Table(name = "recensione")
 public class Recensione {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -29,7 +32,6 @@ public class Recensione {
     private Double voto;
 
     @ColumnDefault("CURRENT_TIMESTAMP")
-    @Convert(disableConversion = true)
     @Column(name = "data_creazione")
     private Instant dataCreazione;
 
@@ -50,10 +52,8 @@ public class Recensione {
     @JoinColumn(name = "autore_id", nullable = false)
     private Utente autore;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "film_id", nullable = false)
-    private Film film;
+    @Column(name = "film_tmdb_id", nullable = false)
+    private Long filmTmdbId;
 
     @OneToMany(mappedBy = "recensione")
     private Set<Commento> commento = new LinkedHashSet<>();

@@ -1,120 +1,102 @@
 package it.unisa.fidelio.application;
 
+import it.unisa.fidelio.presentation.UtenteDTO;
 import it.unisa.fidelio.storage.Utente;
 import it.unisa.fidelio.storage.UtenteRepository;
-import it.unisa.fidelio.presentation.UtenteDTO;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.time.Instant;
+
 import java.util.Base64;
 
 @Service
-public class UtenteService {
+public class UtenteService implements UserDetailsService {
 
-    private final UtenteRepository utenteRepo;
+    private final UtenteRepository utenteRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UtenteService(UtenteRepository utenteRepo, PasswordEncoder passwordEncoder) {
-        this.utenteRepo = utenteRepo;
+    public UtenteService(UtenteRepository utenteRepository, PasswordEncoder passwordEncoder) {
+        this.utenteRepository = utenteRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UtenteDTO login(String email, String passwordChiaro) {
-        return utenteRepo.findByEmail(email.toLowerCase())
-                .filter(utente -> passwordEncoder.matches(passwordChiaro, utente.getPassword()))
+    // === METODI PER THREE-TIER ARCHITECTURE ===
+
+    public boolean existsByUsername(String username) {
+        return utenteRepository.existsByUsername(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return utenteRepository.existsByEmail(email);
+    }
+
+    public Utente findByEmail(String email) {
+        return utenteRepository.findByEmail(email).orElse(null);
+    }
+
+    public Utente findById(Integer id) {
+        return utenteRepository.findById(id).orElse(null);
+    }
+
+    // Login usato dall'API REST (restituisce DTO per il frontend)
+    public UtenteDTO login(String email, String password) {
+        return utenteRepository.findByEmail(email)
+                .filter(u -> passwordEncoder.matches(password, u.getPassword()))
                 .map(this::mapToDTO)
                 .orElse(null);
     }
 
-    @Transactional
-    public Utente registrazione(Utente utente) {
-        // Estrai e trimma i campi
-        String username = utente.getUsername() != null ? utente.getUsername().trim() : null;
-        String email = utente.getEmail() != null ? utente.getEmail().trim().toLowerCase() : null;
-        String password = utente.getPassword();
-        String nome = utente.getNome() != null ? utente.getNome().trim() : null;
-        String cognome = utente.getCognome() != null ? utente.getCognome().trim() : null;
-
-        // === VALIDAZIONI CON REGEX CORRETTE ===
-
-        // Username: 3-20 caratteri, solo lettere, numeri e underscore
-        if (username == null || username.isBlank() || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
-            throw new IllegalArgumentException("Username non valido: deve contenere da 3 a 20 caratteri e solo lettere, numeri o underscore (_).");
-        }
-
-        // Email: formato standard moderno (supporta + , subdomini, TLD lunghi)
-        if (email == null || email.isBlank() || !email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")) {
-            throw new IllegalArgumentException("Formato email non valido. Esempio corretto: nome@dominio.com");
-        }
-
-        // Password: almeno 8 caratteri, con maiuscola, minuscola, numero e almeno un carattere speciale
-        if (password == null || !password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*])[A-Za-z\\d!@#$%^&*]{8,}$")) {
-            throw new IllegalArgumentException("Password troppo debole: deve avere almeno 8 caratteri, includere una maiuscola, una minuscola, un numero e un carattere speciale (!@#$%^&*).");
-        }
-
-        // Nome: 2-30 caratteri, lettere accentate, apostrofo, trattino e spazio
-        if (nome == null || nome.isBlank() || !nome.matches("^[A-Za-zÀ-ÿ' -]{2,30}$")) {
-            throw new IllegalArgumentException("Nome non valido: deve contenere da 2 a 30 caratteri e solo lettere (anche accentate), apostrofo ('), trattino (-) o spazio.");
-        }
-
-// Cognome: stessa regola del nome
-        if (cognome == null || cognome.isBlank() || !cognome.matches("^[A-Za-zÀ-ÿ' -]{2,30}$")) {
-            throw new IllegalArgumentException("Cognome non valido: deve contenere da 2 a 30 caratteri e solo lettere (anche accentate), apostrofo ('), trattino (-) o spazio.");
-        }
-
-        // Controlli unicità
-        if (utenteRepo.existsByEmail(email)) {
-            throw new IllegalArgumentException("Questa email è già registrata.");
-        }
-        if (utenteRepo.existsByUsername(username)) {
-            throw new IllegalArgumentException("Questo username è già in uso.");
-        }
-
-        // Hash della password
-        utente.setPassword(passwordEncoder.encode(password));
-
-        // Normalizza campi
-        utente.setEmail(email);
-        utente.setUsername(username);
-        utente.setNome(nome);
-        utente.setCognome(cognome);
-
-        // Data registrazionedd
-        if (utente.getDataRegistrazione() == null) {
-            utente.setDataRegistrazione(Instant.now());
-        }
-
-        return utenteRepo.save(utente);
+    // Registrazione (chiamata dal controller REST)
+    public Utente registrazione(Utente nuovo) {
+        // Crittografa la password
+        nuovo.setPassword(passwordEncoder.encode(nuovo.getPassword()));
+        return utenteRepository.save(nuovo);
     }
 
-    public Utente getProfilo(int id) {
-        return utenteRepo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Utente non trovato con ID: " + id));
-    }
-
-    @Transactional
-    public void aggiornaBio(int id, String nuovaBio) {
-        Utente u = getProfilo(id);
-        u.setBio(nuovaBio);
-        utenteRepo.save(u);
-    }
-
-
+    // Mappa Utente → UtenteDTO (usato dopo login/registrazione)
     public UtenteDTO mapToDTO(Utente u) {
-        UtenteDTO dto = new UtenteDTO();
-        dto.setId(u.getId());
-        dto.setUsername(u.getUsername());
-        dto.setEmail(u.getEmail());
-        dto.setDtype(u.getDtype());
-        dto.setBio(u.getBio());
-        dto.setLivelloAccesso(u.getLivelloAccesso());
-
+        String immagineBase64 = null;
         if (u.getImmagineProfilo() != null) {
-            String base64 = java.util.Base64.getEncoder().encodeToString(u.getImmagineProfilo());
-            dto.setImmagineProfilo("data:image/jpeg;base64," + base64);
+            immagineBase64 = Base64.getEncoder().encodeToString(u.getImmagineProfilo());
         }
+        return new UtenteDTO(
+                u.getId(),
+                u.getUsername(),
+                u.getEmail(),
+                u.getNome(),
+                u.getCognome(),
+                u.getDtype(),
+                immagineBase64
+        );
+    }
 
-        return dto;
+    // === METODO STATICO PER THYMELEAF ===
+    public static String encodeToBase64(byte[] image) {
+        if (image == null || image.length == 0) {
+            return "";
+        }
+        return Base64.getEncoder().encodeToString(image);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Utente utente = utenteRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato: " + email));
+
+        // Restituiamo un UserDetails che contiene l'entità Utente completa
+        return new User(
+                utente.getEmail(),
+                utente.getPassword(),
+                true, true, true, true,
+                AuthorityUtils.createAuthorityList("USER")
+        ) {
+            public Utente getUtente() {
+                return utente;
+            }
+        };
     }
 }

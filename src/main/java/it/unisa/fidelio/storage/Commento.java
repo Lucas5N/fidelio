@@ -3,10 +3,6 @@ package it.unisa.fidelio.storage;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import java.time.Instant;
 
 @Getter
@@ -16,26 +12,32 @@ import java.time.Instant;
 public class Commento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
     private Integer id;
 
     @Lob
-    @Column(name = "testo", nullable = false)
+    @Column(nullable = false)
     private String testo;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Convert(disableConversion = true)
     @Column(name = "data_creazione")
-    private Instant dataCreazione;
+    private Instant dataCreazione = Instant.now();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "autore_id", nullable = false)
     private Utente autore;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "recensione_id", nullable = false)
+    // --- LOGICA IBRIDA ---
+
+    // Riferimento forte per recensioni su Aiven
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recensione_id") // Può essere NULL
     private Recensione recensione;
 
+    // Riferimento debole per recensioni TMDB
+    @Column(name = "tmdb_review_id") // E' una stringa, es. "548b13..."
+    private String tmdbReviewId;
+
+    // Metodo helper per capire se è un commento a TMDB
+    public boolean isExternalComment() {
+        return tmdbReviewId != null;
+    }
 }

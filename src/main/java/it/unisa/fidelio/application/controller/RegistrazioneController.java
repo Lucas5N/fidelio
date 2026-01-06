@@ -4,13 +4,22 @@ import it.unisa.fidelio.application.UtenteService;
 import it.unisa.fidelio.presentation.RegistrazioneRequestDTO;
 import it.unisa.fidelio.presentation.UtenteDTO;
 import it.unisa.fidelio.storage.Utente;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/registrazione")
@@ -18,22 +27,35 @@ import java.util.List;
 public class RegistrazioneController {
 
     private final UtenteService utenteService;
+    private final AuthenticationManager authenticationManager;
 
-    public RegistrazioneController(UtenteService utenteService) {
+    public RegistrazioneController(UtenteService utenteService, AuthenticationManager authenticationManager) {
         this.utenteService = utenteService;
+        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping
-    public ResponseEntity<?> registra(@RequestBody RegistrazioneRequestDTO dto) {
+    public ResponseEntity<?> registra(@Valid @RequestBody RegistrazioneRequestDTO dto) {
         try {
             String username = dto.getUsername() != null ? dto.getUsername().trim() : null;
             String email = dto.getEmail() != null ? dto.getEmail().trim().toLowerCase() : null;
-            String password = dto.getPassword();
             String nome = dto.getNome() != null ? dto.getNome().trim() : null;
             String cognome = dto.getCognome() != null ? dto.getCognome().trim() : null;
+            String password = dto.getPassword();
 
-            if (nome == null || cognome == null || username == null || email == null || password == null) {
-                return ResponseEntity.badRequest().body("Tutti i campi base sono obbligatori.");
+            // Validazione campi obbligatori
+            if (nome == null || nome.isEmpty() || cognome == null || cognome.isEmpty() ||
+                    username == null || username.isEmpty() || email == null || email.isEmpty() ||
+                    password == null || password.isEmpty()) {
+                return ResponseEntity.badRequest().body("Tutti i campi obbligatori devono essere compilati.");
+            }
+
+            // Controllo unicità username e email
+            if (utenteService.existsByUsername(username)) {
+                return ResponseEntity.badRequest().body("Username già in uso.");
+            }
+            if (utenteService.existsByEmail(email)) {
+                return ResponseEntity.badRequest().body("Email già registrata.");
             }
 
             Utente nuovoUtente = new Utente();
@@ -41,11 +63,12 @@ public class RegistrazioneController {
             nuovoUtente.setCognome(cognome);
             nuovoUtente.setUsername(username);
             nuovoUtente.setEmail(email);
-            nuovoUtente.setPassword(password);
+            nuovoUtente.setPassword(password); // verrà criptata nel service
+            nuovoUtente.setDataRegistrazione(java.time.Instant.now());
+            nuovoUtente.setNumFilmVisti(0);
 
-            // --- GESTIONE IMMAGINE PROFILO ---
+            // Immagine profilo
             if (dto.getImmagineBase64() != null && dto.getImmagineBase64().contains(",")) {
-                // Rimuove l'intestazione "data:image/jpeg;base64,"
                 String base64Image = dto.getImmagineBase64().split(",")[1];
                 byte[] imageBytes = Base64.getDecoder().decode(base64Image);
                 nuovoUtente.setImmagineProfilo(imageBytes);
@@ -65,13 +88,29 @@ public class RegistrazioneController {
                 nuovoUtente.setLivelloAccesso("BASE");
             }
 
+            // Salva utente (password criptata nel service)
             Utente salvato = utenteService.registrazione(nuovoUtente);
+
+            // === LOGIN AUTOMATICO ===
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // === CREA E SALVA LA SESSIONE ===
+            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attr.getRequest();
+            HttpSession session = request.getSession(true); // crea sessione
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+
+            // Restituisci DTO
             return ResponseEntity.status(HttpStatus.CREATED).body(utenteService.mapToDTO(salvato));
 
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body("Username o email già in uso.");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore tecnico.");
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Errore durante la registrazione.");
         }
     }
 }

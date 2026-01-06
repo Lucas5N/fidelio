@@ -2,17 +2,11 @@ package it.unisa.fidelio.application.controller;
 
 import it.unisa.fidelio.application.RecensioneService;
 import it.unisa.fidelio.application.TmdbClient;
-import it.unisa.fidelio.storage.Film;
-import it.unisa.fidelio.storage.FilmRepository;
-import it.unisa.fidelio.storage.Recensione;
+import it.unisa.fidelio.application.UtenteService;
 import it.unisa.fidelio.storage.Utente;
-import it.unisa.fidelio.storage.UtenteRepository;
-import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
@@ -20,87 +14,113 @@ import org.springframework.web.bind.annotation.*;
 public class GestioneRecensioneController {
 
     private final RecensioneService recensioneService;
-    private final FilmRepository filmRepository;
-    private final UtenteRepository utenteRepository;
+    private final UtenteService utenteService;
     private final TmdbClient tmdbClient;
 
     public GestioneRecensioneController(RecensioneService recensioneService,
-                                        FilmRepository filmRepository,
-                                        UtenteRepository utenteRepository,
+                                        UtenteService utenteService,
                                         TmdbClient tmdbClient) {
         this.recensioneService = recensioneService;
-        this.filmRepository = filmRepository;
-        this.utenteRepository = utenteRepository;
+        this.utenteService = utenteService;
         this.tmdbClient = tmdbClient;
     }
 
-    // Lista recensioni (usa DTO)
     @GetMapping
     public String elencoRecensioni(@PathVariable Long filmId, Model model) {
-        Film film = filmRepository.findById(filmId)
-                .orElseThrow(() -> new IllegalArgumentException("Film non trovato"));
-
-        model.addAttribute("film", film);
-        model.addAttribute("recensioni", recensioneService.getRecensioniDtoPerFilm(film));
+        model.addAttribute("recensioni", recensioneService.getTutteLeRecensioni(filmId));
         model.addAttribute("movieDetails", tmdbClient.getMovieDetails(filmId));
-        model.addAttribute("tmdbId", filmId);  // per link TMDB
         return "recensioni/lista";
     }
 
-    // Form nuova recensione
-    @GetMapping("/nuova")
-    public String mostraFormNuovaRecensione(@PathVariable Long filmId, Model model) {
-        Film film = filmRepository.findById(filmId).orElseThrow();
-
-        model.addAttribute("film", film);
-        model.addAttribute("movieDetails", tmdbClient.getMovieDetails(filmId));
-        model.addAttribute("recensioneForm", new Recensione());
-        model.addAttribute("tmdbId", filmId);
-        return "recensioni/nuova";
-    }
-
-    // Salva recensione
     @PostMapping("/nuova")
     public String salvaRecensione(@PathVariable Long filmId,
-                                  @Valid @ModelAttribute("recensioneForm") Recensione recensioneForm,
-                                  BindingResult result,
-                                  @AuthenticationPrincipal UserDetails userDetails,
-                                  Model model) {
-        if (result.hasErrors()) {
-            Film film = filmRepository.findById(filmId).orElseThrow();
-            model.addAttribute("film", film);
-            model.addAttribute("movieDetails", tmdbClient.getMovieDetails(filmId));
-            model.addAttribute("tmdbId", filmId);
-            return "recensioni/nuova";
+                                  @RequestParam String testo,
+                                  @RequestParam Double voto,
+                                  @RequestParam(required = false, defaultValue = "false") boolean spoilerAlert,
+                                  @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        Utente utenteLoggato = utenteService.findByEmail(userDetails.getUsername());
+        if (utenteLoggato == null) {
+            throw new IllegalStateException("Utente non trovato");
         }
 
-        Utente autore = utenteRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("Utente non trovato"));
-
-        Film film = filmRepository.findById(filmId).orElseThrow();
-
-        recensioneService.scriviRecensione(
-                autore,
-                film,
-                recensioneForm.getTesto(),
-                recensioneForm.getVoto(),
-                recensioneForm.getSpoilerAlert() != null && recensioneForm.getSpoilerAlert()
-        );
-
-        return "redirect:/film/" + filmId + "/recensioni";
+        recensioneService.scriviRecensione(utenteLoggato, filmId, testo, voto, spoilerAlert);
+        return "redirect:/movies/" + filmId;
     }
 
-    // Like
     @PostMapping("/{recensioneId}/like")
-    public String like(@PathVariable Long filmId, @PathVariable Integer recensioneId) {
-        recensioneService.aggiungiLike(recensioneId);
-        return "redirect:/film/" + filmId + "/recensioni";
+    public String like(@PathVariable Long filmId,
+                       @PathVariable Integer recensioneId,
+                       @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        Utente utenteLoggato = utenteService.findByEmail(userDetails.getUsername());
+        if (utenteLoggato == null) {
+            throw new IllegalStateException("Utente non trovato");
+        }
+
+        recensioneService.aggiungiLike(recensioneId, utenteLoggato.getId());
+        return "redirect:/movies/" + filmId;
     }
 
-    // Dislike
     @PostMapping("/{recensioneId}/dislike")
-    public String dislike(@PathVariable Long filmId, @PathVariable Integer recensioneId) {
-        recensioneService.aggiungiDislike(recensioneId);
-        return "redirect:/film/" + filmId + "/recensioni";
+    public String dislike(@PathVariable Long filmId,
+                          @PathVariable Integer recensioneId,
+                          @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        Utente utenteLoggato = utenteService.findByEmail(userDetails.getUsername());
+        if (utenteLoggato == null) {
+            throw new IllegalStateException("Utente non trovato");
+        }
+
+        recensioneService.aggiungiDislike(recensioneId, utenteLoggato.getId());
+        return "redirect:/movies/" + filmId;
+    }
+
+    @PostMapping("/{recensioneId}/commenta")
+    public String commenta(@PathVariable Long filmId,
+                           @PathVariable Integer recensioneId,
+                           @RequestParam String testo,
+                           @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        Utente utenteLoggato = utenteService.findByEmail(userDetails.getUsername());
+        if (utenteLoggato == null) {
+            throw new IllegalStateException("Utente non trovato");
+        }
+
+        recensioneService.aggiungiCommento(recensioneId, utenteLoggato, testo);
+        return "redirect:/movies/" + filmId;
+    }
+
+    @PostMapping("/{recensioneId}/elimina")
+    public String eliminaRecensione(@PathVariable Long filmId,
+                                    @PathVariable Integer recensioneId,
+                                    @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        Utente utenteLoggato = utenteService.findByEmail(userDetails.getUsername());
+        if (utenteLoggato == null) {
+            throw new IllegalStateException("Utente non trovato");
+        }
+
+        recensioneService.eliminaRecensione(recensioneId, utenteLoggato);
+        return "redirect:/movies/" + filmId;
+    }
+
+    @PostMapping("/{recensioneId}/segnala")
+    public String segnalaRecensione(@PathVariable Long filmId,
+                                    @PathVariable Integer recensioneId,
+                                    @RequestParam(required = false) String motivo,
+                                    @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+
+        Utente utenteLoggato = utenteService.findByEmail(userDetails.getUsername());
+        if (utenteLoggato == null) {
+            throw new IllegalStateException("Utente non trovato");
+        }
+
+        try {
+            recensioneService.segnalaRecensione(recensioneId, utenteLoggato.getId(), motivo);
+        } catch (IllegalArgumentException e) {
+            // già segnalata o propria recensione
+        }
+        return "redirect:/movies/" + filmId;
     }
 }

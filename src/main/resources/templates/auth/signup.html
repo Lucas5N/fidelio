@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -12,28 +12,27 @@
     <style>
         body.signup-page {
             margin: 0;
-            padding: 0;
-            background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
-            url("/images/collage_movies.jpg") no-repeat center center fixed;
-            background-size: cover;
+            background: linear-gradient(rgba(0,0,0,.85), rgba(0,0,0,.85)),
+            url("/images/collage_movies.jpg") center/cover fixed;
             font-family: 'Inter', sans-serif;
-            color: var(--text);
-            height: auto !important;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-y: auto !important;
         }
 
-        .topnav {
-            width: 100%;
-            padding: 20px 0;
-            flex-shrink: 0;
+        /* Navbar compatta auth */
+        .signup-page .nav-inner { height: 64px; }
+        .signup-page .nav-logo--img img {
+            height: 56px;
+            transform: none;
+            filter: none;
         }
+
+        .topnav { flex-shrink: 0; }
 
         .main-wrapper {
             flex: 1;
-            padding: 40px 20px 80px;
+            padding: 24px 20px 48px;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -45,9 +44,9 @@
             padding: 48px 40px;
             border-radius: var(--radius);
             background: var(--panel);
-            box-shadow: var(--shadow);
             border: 1px solid var(--stroke-2);
-            animation: fadeIn 0.5s ease-out;
+            box-shadow: var(--shadow);
+            animation: fadeIn .4s ease;
         }
 
         @keyframes fadeIn {
@@ -57,72 +56,60 @@
 
         .panel h1 {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
             font-size: 32px;
-            font-weight: 600;
-            letter-spacing: -0.02em;
         }
 
-        /* MESSAGGIO DI ERRORE INLINE - STILE LOGIN */
-        #signup-error {
-            color: #ff4444;
-            background: rgba(255, 68, 68, 0.1);
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-            border: 1px solid rgba(255, 68, 68, 0.3);
+        /* resto del tuo CSS invariato */
+        .tier-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:40px; }
+        .tier-card { padding:24px 16px; border:2px solid var(--stroke-2); border-radius:var(--radius); cursor:pointer; background:var(--panel-2); transition:.3s; text-align:center; }
+        .tier-card.selected { border-color:var(--accent); background:rgba(240,106,42,.12); }
+        .tier-card h3 { font-size:20px; margin-bottom:10px; }
+        .tier-card ul { font-size:13px; color:var(--muted); margin-top:15px; }
+
+        .name-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .field { margin-bottom:20px; }
+
+        label { font-size:14px; color:var(--muted); margin-bottom:8px; display:block; }
+
+        input {
+            width:100%;
+            height:52px;
+            background:var(--panel-2);
+            border:1px solid var(--stroke-2);
+            border-radius:var(--radius);
+            color:white;
+            padding:0 16px;
         }
 
-        input.error-border { border-color: #ff4444 !important; }
-
-        .tier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .tier-card { padding: 24px 16px; border: 2px solid var(--stroke-2); border-radius: var(--radius); cursor: pointer; background: var(--panel-2); transition: all 0.3s ease; }
-        .tier-card.selected { border-color: var(--accent); background: rgba(240,106,42,.12); }
-        .tier-card h3 { font-weight: 600; font-size: 20px; margin-bottom: 10px; }
-        .tier-card ul { text-align: left; padding-left: 15px; font-size: 13px; color: var(--muted); margin-top: 15px; }
-        .price { color: var(--accent); font-weight: 600; font-size: 14px; }
-
-        .extra-fields { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.4s ease; }
-        .extra-fields.visible { max-height: 500px; opacity: 1; margin-top: 25px; }
-
-        .name-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        input:focus { border-color:var(--accent); outline:none; }
 
         .login-link-section {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            text-align: center;
+            margin-top:32px;
+            padding-top:24px;
+            border-top:1px solid rgba(255,255,255,.06);
+            text-align:center;
         }
-
-        .login-link-section p { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
 
         .btn-secondary {
-            display: inline-block;
-            width: 100%;
-            padding: 14px;
-            border-radius: var(--radius);
-            border: 1px solid var(--stroke-2);
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.2s ease;
-            background: rgba(255, 255, 255, 0.03);
+            display:block;
+            width:100%;
+            padding:14px;
+            border-radius:var(--radius);
+            border:1px solid var(--stroke-2);
+            background:rgba(255,255,255,.04);
+            color:var(--text);
+            text-decoration:none;
+            font-weight:600;
         }
 
-        .btn-secondary:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--accent); }
-
-        @media (max-width: 850px) {
-            .tier-grid { grid-template-columns: 1fr; }
-            .name-row { grid-template-columns: 1fr; gap: 0; }
+        @media (max-width:850px){
+            .tier-grid { grid-template-columns:1fr; }
+            .name-row { grid-template-columns:1fr; }
         }
     </style>
 </head>
 <body class="signup-page">
-
 <header class="topnav">
     <div class="nav-inner">
         <a th:href="@{/}" class="nav-logo nav-logo--img">
@@ -170,44 +157,51 @@
 
             <div class="name-row">
                 <div class="field">
-                    <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Nome</label>
-                    <input type="text" id="nome" required style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
+                    <label>Nome</label>
+                    <input type="text" id="nome" required placeholder="Es. Mario">
                 </div>
                 <div class="field">
-                    <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Cognome</label>
-                    <input type="text" id="cognome" required style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
+                    <label>Cognome</label>
+                    <input type="text" id="cognome" required placeholder="Es. Rossi">
                 </div>
             </div>
 
-            <div class="field" style="margin-bottom: 20px;">
-                <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Username</label>
-                <input type="text" id="username" required style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
-            </div>
-            <div class="field" style="margin-bottom: 20px;">
-                <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Email</label>
-                <input type="email" id="email" required style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
-            </div>
-            <div class="field" style="margin-bottom: 24px;">
-                <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Password</label>
-                <input type="password" id="password" required minlength="8" style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
+            <div class="field">
+                <label>Username</label>
+                <input type="text" id="username" required>
             </div>
 
-            <!-- Campi extra -->
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="email" required>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="password" required minlength="8">
+            </div>
+
+            <div class="field">
+                <label>Foto Profilo (Opzionale)</label>
+                <input type="file" id="fotoInput" accept="image/*" style="border:none; background:transparent; padding:10px 0;">
+            </div>
+
             <div id="critico-fields" class="extra-fields">
-                <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Testata giornalistica</label>
-                <input type="text" id="testata" style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
-            </div>
-            <div id="fedele-fields" class="extra-fields" style="margin-bottom: 10px;">
-                <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Casa di produzione</label>
-                <input type="text" id="casa" style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; margin-bottom: 15px; outline: none;">
-                <label style="color: var(--muted); font-size: 14px; display: block; margin-bottom: 8px;">Link Portfolio / IMDB</label>
-                <input type="url" id="credit" style="width: 100%; height: 52px; background: var(--panel-2); border: 1px solid var(--stroke-2); border-radius: var(--radius); color: white; padding: 0 15px; outline: none;">
+                <label>Testata giornalistica</label>
+                <input type="text" id="testata">
             </div>
 
-            <!-- BOX ERRORE INLINE -->
-            <div id="signup-error">Errore durante la registrazione</div>
+            <div id="fedele-fields" class="extra-fields">
+                <label>Casa di produzione</label>
+                <input type="text" id="casa" style="margin-bottom:15px;">
+                <label>Link Portfolio / IMDB</label>
+                <input type="url" id="credit">
+            </div>
 
-            <button type="submit" style="width: 100%; height: 56px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-weight: 600; cursor: pointer; transition: transform 0.1s ease;">
+            <div id="signup-error">Compila correttamente tutti i campi</div>
+
+            <button type="submit"
+                    style="width: 100%; height: 56px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-weight: 600; margin-top: 10px; cursor: pointer;">
                 Registrati
             </button>
         </form>
@@ -218,25 +212,33 @@
         </div>
     </section>
 </div>
-
 <script>
     const signupForm = document.getElementById("signupForm");
     const errorMsg = document.getElementById("signup-error");
     const allInputs = signupForm.querySelectorAll('input');
 
-    // Semplice gestione delle tier cards
-    const cards = document.querySelectorAll('.tier-card');
-    cards.forEach(card => card.addEventListener('click', () => {
-        cards.forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-        const tier = card.dataset.tier;
-        document.getElementById('dtype').value = tier;
-        document.getElementById('critico-fields').classList.toggle('visible', tier === 'Critico');
-        document.getElementById('fedele-fields').classList.toggle('visible', tier === 'Fedele');
-        errorMsg.style.display = "none"; // Nasconde errore al cambio tier
-    }));
+    // Funzione per convertire file in Base64
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
 
-    // Rimuove l'errore e il bordo rosso quando l'utente scrive
+    // Gestione selezione tier
+    document.querySelectorAll('.tier-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            const tier = card.dataset.tier;
+            document.getElementById('dtype').value = tier;
+            document.getElementById('critico-fields').classList.toggle('visible', tier === 'Critico');
+            document.getElementById('fedele-fields').classList.toggle('visible', tier === 'Fedele');
+            errorMsg.style.display = "none";
+        });
+    });
+
+    // Rimuovi errori durante la digitazione
     allInputs.forEach(input => {
         input.addEventListener('input', () => {
             errorMsg.style.display = "none";
@@ -244,19 +246,37 @@
         });
     });
 
+    // Submit form
     signupForm.addEventListener("submit", async (e) => {
         e.preventDefault();
+        errorMsg.style.display = "none";
 
+        // Converti foto in Base64
+        const fotoFile = document.getElementById('fotoInput').files[0];
+        let fotoBase64 = null;
+        if (fotoFile) {
+            try {
+                fotoBase64 = await toBase64(fotoFile);
+            } catch (err) {
+                errorMsg.innerText = "Errore con la foto profilo";
+                errorMsg.style.display = "block";
+                return;
+            }
+        }
+
+        // Costruisci payload
+        const tier = document.getElementById('dtype').value;
         const payload = {
             nome: document.getElementById('nome').value.trim(),
             cognome: document.getElementById('cognome').value.trim(),
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
             password: document.getElementById('password').value,
-            dtype: document.getElementById('dtype').value,
-            testataGiornalistica: document.getElementById('testata').value.trim(),
-            casaProduzione: document.getElementById('casa').value.trim(),
-            creditReference: document.getElementById('credit').value.trim()
+            dtype: tier,
+            testataGiornalistica: tier === 'Critico' ? document.getElementById('testata').value.trim() || null : null,
+            casaProduzione: tier === 'Fedele' ? document.getElementById('casa').value.trim() || null : null,
+            creditReference: tier === 'Fedele' ? document.getElementById('credit').value.trim() || null : null,
+            immagineBase64: fotoBase64
         };
 
         try {
@@ -266,18 +286,14 @@
                 body: JSON.stringify(payload)
             });
 
-            if (response.ok || response.status === 201) {
-                const user = await response.json();
-                localStorage.setItem("user", JSON.stringify(user));
+            if (response.ok) {
+                // Registrazione e login automatico completati sul server
+                // Redirect diretto a home (sessione già attiva)
                 window.location.href = "/home";
             } else {
-                // Gestione Errore Backend
-                const errText = await response.text();
-                errorMsg.innerText = errText || "Email o Username già esistenti";
+                const errorText = await response.text();
+                errorMsg.innerText = errorText || "Errore durante la registrazione";
                 errorMsg.style.display = "block";
-
-                // Opzionale: aggiungi bordo rosso a tutti i campi
-                allInputs.forEach(i => i.classList.add("error-border"));
             }
         } catch (err) {
             errorMsg.innerText = "Impossibile collegarsi al server";

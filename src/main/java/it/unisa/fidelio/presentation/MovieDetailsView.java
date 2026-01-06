@@ -25,5 +25,9 @@ public record MovieDetailsView(
             String roleLabel,
             String profileUrl
     ) {}
-}
 
+    // Aggiungi getter per 'id' come alias di tmdbId
+    public long getId() {
+        return tmdbId;
+    }
+}
