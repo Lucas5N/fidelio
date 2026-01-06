@@ -11,8 +11,8 @@ public class CommunityController {
         return "communities"; // Cerca communities.html in resources/templates
     }
 
-    @GetMapping("/community-detail")
+    @GetMapping("/community-details")
     public String viewCommunityDetailPage() {
-        return "community-detail"; // Cerca community-detail.html
+        return "community-details"; // Cerca community-detail.html
     }
 }

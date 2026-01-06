@@ -49,12 +49,17 @@ public class CommunityService {
         Utente creatore = utenteRepo.findById(creatoreId)
                 .orElseThrow(() -> new EntityNotFoundException("Utente creatore non trovato"));
 
+        //BUSSINESS LOGIC
+        if (!creatore.isFedele()) {
+            throw new SecurityException("Operazione negata: Solo gli utenti 'Fedele' possono creare community.");
+        }
+
         Community community = new Community();
         community.setNome(communityDTO.getNome());
         community.setDescrizione(communityDTO.getDescrizione());
         community.setCreatore(creatore);
         community.setDataCreazione(Instant.now());
-        community.setNumMembri(1); // Inizialmente 0 o 1 se il creatore si iscrive in automatico
+        community.setNumMembri(1);
 
         Community saved = communityRepo.save(community);
         return mapToDTO(saved);
@@ -146,7 +151,10 @@ public class CommunityService {
         Utente autore = utenteRepo.findById(autoreId)
                 .orElseThrow(() -> new EntityNotFoundException("Utente non trovato"));
 
-        // Controllo iscrizione
+        // BUSSINESS LOGIC
+        if (!autore.isCritico()) {
+             throw new SecurityException("Operazione negata: Solo i 'Critici' possono aprire nuove discussioni.");
+        }
         if (!autore.getCommunitiesIscritte().contains(community)) {
             throw new IllegalStateException("L'utente non è iscritto e non può pubblicare.");
         }

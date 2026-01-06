@@ -113,5 +113,13 @@ public class Utente {
     @OneToMany(mappedBy = "utente")
     private Set<UtenteGeneri> utenteGeneri = new LinkedHashSet<>();
 
+    public boolean isFedele() {
+        return "Fedele".equalsIgnoreCase(this.dtype);
+    }
+
+    public boolean isCritico() {
+        return "Critico".equalsIgnoreCase(this.dtype);
+    }
+
 
 }

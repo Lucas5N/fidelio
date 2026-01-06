@@ -5,210 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Communities - Fidelio</title>
 
-    <!-- Riutilizziamo i tuoi CSS base -->
+    <!-- CSS -->
     <link rel="stylesheet" th:href="@{/css/home.css}" />
-    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <!-- Qui dentro ora c'è tutto lo stile necessario -->
+    <link rel="stylesheet" th:href="@{/css/community.css}" />
 
-    <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-
-    <style>
-        /* STILI SPECIFICI PER COMMUNITY */
-        .page-header {
-            padding: 120px 0 60px;
-            text-align: center;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), var(--background)),
-                        url('/images/collage_movies.jpg') center/cover;
-        }
-
-        .header-title { font-size: 42px; font-weight: 700; color: white; margin-bottom: 10px; }
-        .header-sub { color: var(--muted); font-size: 18px; max-width: 600px; margin: 0 auto 30px; }
-
-        .community-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 24px;
-            padding: 0 20px 80px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .comm-card {
-            background: var(--panel);
-            border: 1px solid var(--stroke-2);
-            border-radius: 12px;
-            padding: 24px;
-            transition: transform 0.2s, border-color 0.2s;
-            display: flex;
-            flex-direction: column;
-            text-decoration: none;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .comm-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent);
-        }
-
-        .comm-icon { font-size: 32px; margin-bottom: 16px; }
-        .comm-name { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
-        .comm-desc { font-size: 14px; color: var(--muted); line-height: 1.5; flex-grow: 1; margin-bottom: 20px; }
-
-        .comm-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            color: var(--muted);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 15px;
-        }
-
-        .member-badge { display: flex; align-items: center; gap: 6px; }
-        .dot { width: 6px; height: 6px; background: #2ecc71; border-radius: 50%; }
-
-        /* MODALE CREAZIONE */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-            z-index: 1000;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
-
-        .modal {
-            background: #1a1a1a; width: 100%; max-width: 500px;
-            padding: 30px; border-radius: 12px; border: 1px solid #333;
-        }
-
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; margin-bottom: 8px; color: #aaa; font-size: 14px; }
-        .form-input {
-            width: 100%; padding: 12px; background: #111; border: 1px solid #333;
-            color: white; border-radius: 6px; outline: none;
-        }
-        .form-input:focus { border-color: var(--accent); }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div th:replace="fragments/navbar :: navbar"></div>
+    <!-- NAVBAR Sticky -->
+    <div class="topnav">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+    </div>
 
-    <header class="page-header">
-        <h1 class="header-title">Esplora le Community</h1>
-        <p class="header-sub">Trova il tuo gruppo, partecipa alle discussioni e condividi la tua passione per il cinema.</p>
+    <!-- CONTENUTO PRINCIPALE -->
+    <div class="page-wrapper">
 
-        <!-- Bottone che apre la modale -->
-        <button onclick="openModal()" class="btn btn-primary" style="padding: 12px 24px; font-size: 16px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer;">
-            + Crea Nuova Community
-        </button>
-    </header>
+        <!-- Hero Section -->
+        <header class="comm-hero">
+            <h1 class="hero-title">Esplora le Community</h1>
+            <p class="hero-sub">Trova il tuo gruppo, partecipa alle discussioni e condividi la tua passione per il cinema.</p>
 
-    <main class="community-grid" id="communityContainer">
-        <!-- Le card verranno caricate qui via JS o Thymeleaf -->
-        <!-- Esempio Card Thymeleaf se carichi server-side -->
-        <!--
-        <a th:each="c : ${communities}" th:href="@{/community/{id}(id=${c.id})}" class="comm-card">
-            <div class="comm-icon">🎬</div>
-            <h3 class="comm-name" th:text="${c.nome}">Horror Fans</h3>
-            <p class="comm-desc" th:text="${c.descrizione}">Descrizione...</p>
-            <div class="comm-meta">
-                <div class="member-badge"><span class="dot"></span> <span th:text="${c.numMembri}">120</span> membri</div>
-                <span>Unisciti →</span>
+            <button onclick="openModal()" class="btn primary" style="padding: 12px 24px; font-size: 16px;">
+                + Crea Nuova Community
+            </button>
+        </header>
+
+        <!-- Griglia Card -->
+        <main class="comm-grid" id="communityContainer">
+            <div style="grid-column: 1/-1; text-align: center; color: #666; padding: 40px;">
+                Caricamento community...
             </div>
-        </a>
-        -->
-    </main>
+        </main>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </footer>
 
     <!-- MODALE CREAZIONE -->
     <div class="modal-overlay" id="createModal">
-        <div class="modal">
-            <h2 style="margin-bottom: 20px; color: white;">Crea Community</h2>
+        <div class="modal-box">
+            <h2 class="modal-title">Crea Community</h2>
             <form id="createCommunityForm">
-                <div class="form-group">
-                    <label class="form-label">Nome Community</label>
-                    <input type="text" id="cName" class="form-input" required placeholder="Es. Fans di Kubrick">
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-size:13px; color:#aaa; font-weight:600;">NOME</label>
+                    <input type="text" id="cName" class="modal-input" required placeholder="Es. Fans di Kubrick">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Descrizione</label>
-                    <textarea id="cDesc" class="form-input" rows="4" required placeholder="Di cosa si parla qui?"></textarea>
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-size:13px; color:#aaa; font-weight:600;">DESCRIZIONE</label>
+                    <textarea id="cDesc" class="modal-input" rows="4" required placeholder="Di cosa si parla qui?"></textarea>
                 </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="closeModal()" style="padding: 10px 20px; background: transparent; color: #aaa; border: 1px solid #333; border-radius: 6px; cursor: pointer;">Annulla</button>
-                    <button type="submit" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer;">Crea</button>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal()" class="btn">Annulla</button>
+                    <button type="submit" class="btn primary">Crea Community</button>
                 </div>
             </form>
         </div>
     </div>
-
-    <div th:replace="fragments/footer :: footer"></div>
-
-    <script>
-        // --- LOGICA FRONTEND ---
-
-        const user = JSON.parse(localStorage.getItem("user"));
-        // Se non c'è user, ridirigi al login (opzionale)
-
-        // 1. Carica le community all'avvio
-        async function loadCommunities() {
-            try {
-                const res = await fetch('/api/community');
-                const communities = await res.json();
-                const container = document.getElementById('communityContainer');
-                container.innerHTML = '';
-
-                communities.forEach(c => {
-                    const card = document.createElement('a');
-                    card.href = `/community-detail?id=${c.id}`; // O la tua rotta Thymeleaf
-                    card.className = 'comm-card';
-                    card.innerHTML = `
-                        <div class="comm-icon">💬</div>
-                        <h3 class="comm-name">${c.nome}</h3>
-                        <p class="comm-desc">${c.descrizione}</p>
-                        <div class="comm-meta">
-                            <div class="member-badge"><span class="dot"></span> ${c.numMembri} membri</div>
-                            <span>Vai alla community →</span>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
-            } catch (err) { console.error(err); }
-        }
-
-        loadCommunities();
-
-        // 2. Gestione Modale
-        function openModal() { document.getElementById('createModal').classList.add('active'); }
-        function closeModal() { document.getElementById('createModal').classList.remove('active'); }
-
-        // 3. Creazione Community
-        document.getElementById('createCommunityForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                nome: document.getElementById('cName').value,
-                descrizione: document.getElementById('cDesc').value
-            };
-
-            // ATTENZIONE: Qui serve l'ID utente. In un'app reale va nel token.
-            // Qui lo prendiamo dal localStorage per il prototipo.
-            const creatoreId = user ? user.id : 1;
-
-            const res = await fetch(`/api/community?creatoreId=${creatoreId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if(res.ok) {
-                closeModal();
-                loadCommunities(); // Ricarica la lista
-            } else {
-                alert("Errore nella creazione. Sei un utente 'Fedele'?");
-            }
-        });
-    </script>
+    <script th:src="@{/js/communities.js}"></script>
 </body>
 </html>
