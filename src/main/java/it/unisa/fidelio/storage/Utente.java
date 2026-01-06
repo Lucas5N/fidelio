@@ -83,11 +83,11 @@ public class Utente {
     )
     private Set<Community> communitiesIscritte = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "proprietario")
-    private Set<ListaPrivata> listePrivate = new LinkedHashSet<>();
+//    @OneToMany(mappedBy = "proprietario")
+//    private Set<ListaPrivata> listePrivate = new LinkedHashSet<>();
 
-    @OneToOne(mappedBy = "proprietario")
-    private ListaRaccomandati listaRaccomandati;
+//    @OneToOne(mappedBy = "proprietario")
+//    private ListaRaccomandati listaRaccomandati;
 
     @OneToMany(mappedBy = "mittente")
     private Set<MessaggioPrivato> messaggiInviati = new LinkedHashSet<>();
@@ -122,4 +122,7 @@ public class Utente {
     }
 
 
+
+
+    public Utente(){}
 }

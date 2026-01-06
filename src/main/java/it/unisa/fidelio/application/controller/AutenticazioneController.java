@@ -3,58 +3,46 @@ package it.unisa.fidelio.application.controller;
 import it.unisa.fidelio.application.UtenteService;
 import it.unisa.fidelio.presentation.LoginRequestDTO;
 import it.unisa.fidelio.presentation.UtenteDTO;
-import it.unisa.fidelio.storage.Utente;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*") // Permette chiamate da frontend esterni (es. React/Vue)
+@CrossOrigin(origins = "*")
 public class AutenticazioneController {
 
     private final UtenteService utenteService;
+    private final AuthenticationManager authenticationManager;
 
-    public AutenticazioneController(UtenteService utenteService) {
+    public AutenticazioneController(UtenteService utenteService, AuthenticationManager authenticationManager) {
         this.utenteService = utenteService;
+        this.authenticationManager = authenticationManager;
     }
 
-    /**
-     * Endpoint per il LOGIN.
-     * Riceve email e password, restituisce i dati dell'utente se validi.
-     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO request) {
         try {
-            UtenteDTO utenteLoggato = utenteService.login(request.getEmail(), request.getPassword());
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
 
-            if (utenteLoggato != null) {
-                return ResponseEntity.ok(utenteLoggato);
-            } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Credenziali non valide: email o password errati.");
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            var utente = utenteService.findByEmail(request.getEmail());
+            if (utente == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utente non trovato.");
             }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore durante il login: " + e.getMessage());
-        }
-    }
 
-    /**
-     * Endpoint per la REGISTRAZIONE.
-     * Riceve un oggetto Utente, cripta la password e lo salva.
-     */
-    @PostMapping("/registrazione")
-    public ResponseEntity<?> registrazione(@RequestBody Utente utente) {
-        try {
-            Utente nuovoUtente = utenteService.registrazione(utente);
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuovoUtente);
-        } catch (IllegalArgumentException e) {
-            // Gestisce errori come "Email già in uso"
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            UtenteDTO utenteLoggato = utenteService.mapToDTO(utente);
+
+            return ResponseEntity.ok(utenteLoggato);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Errore durante la registrazione: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Email o password errati.");
         }
     }
 }

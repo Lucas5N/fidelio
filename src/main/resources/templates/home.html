@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -21,7 +21,7 @@
 <body>
 <div class="page">
 
-    <div th:replace="fragments/navbar :: navbar"></div>
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
 
     <!-- HERO (with background image) -->
     <section class="hero hero--collage">
@@ -37,6 +37,7 @@
 
         </div>
     </section>
+
 
     <main class="content">
         <!-- Popular -->
@@ -442,12 +443,13 @@
 
     </main>
 
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
 
 </div>
 
 <script th:src="@{/js/home.js}">
-
 </script>
+<script th:src="@{/js/auth.js}"></script>
+
 </body>
 </html>

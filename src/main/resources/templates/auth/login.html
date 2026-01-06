@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -10,117 +11,75 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
-        /* SFONDO SCURO INTEGRATO */
         body.login-page {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-            url("/images/collage_movies.jpg") no-repeat center center fixed;
-            background-size: cover;
-            font-family: 'Inter', sans-serif;
-            color: var(--text);
-            /* Centratura verticale flessibile */
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            height: auto;
-            overflow-y: auto;
+            margin:0;
+            background: linear-gradient(rgba(0,0,0,.8), rgba(0,0,0,.8)),
+            url("/images/collage_movies.jpg") center/cover fixed;
+            font-family:'Inter', sans-serif;
+            min-height:100vh;
+            display:flex;
+            flex-direction:column;
         }
 
-        .topnav {
-            width: 100%;
-            padding: 20px 0;
-            flex-shrink: 0;
+        /* Navbar compatta */
+        .login-page .nav-inner { height:64px; }
+        .login-page .nav-logo--img img {
+            height:56px;
+            transform:none;
+            filter:none;
         }
 
         .main-wrapper {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            flex:1;
+            display:flex;
+            justify-content:center;
+            align-items:flex-start;
+            padding:32px 20px 48px;
         }
 
         .panel {
-            max-width: 420px;
-            width: 100%;
-            padding: 48px 40px;
-            border-radius: var(--radius);
-            background: var(--panel);
-            box-shadow: var(--shadow);
-            border: 1px solid var(--stroke-2);
-            animation: fadeIn 0.5s ease-out;
+            max-width:420px;
+            width:100%;
+            padding:48px 40px;
+            background:var(--panel);
+            border-radius:var(--radius);
+            border:1px solid var(--stroke-2);
+            box-shadow:var(--shadow);
+            animation:fadeIn .4s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity:0; transform:translateY(10px); }
+            to { opacity:1; transform:none; }
         }
 
         .panel h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 32px;
-            font-weight: 600; /* Inter 600 */
-            letter-spacing: -0.02em;
+            text-align:center;
+            margin-bottom:32px;
+            font-size:32px;
         }
 
-        /* MESSAGGIO DI ERRORE INLINE */
-        #login-error {
-            color: #ff4444;
-            background: rgba(255, 68, 68, 0.1);
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 13px;
-            margin-bottom: 20px;
-            text-align: center;
-            display: none;
-            border: 1px solid rgba(255, 68, 68, 0.3);
-        }
-
-        input.error-border { border-color: #ff4444 !important; }
-
-        /* EFFETTO CLICK SUL BOTTONE */
-        #loginForm button:active {
-            transform: scale(0.98);
-        }
-
-        /* SEZIONE REGISTRAZIONE SOTTO ACCEDI */
         .signup-link-section {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            text-align: center;
-        }
-
-        .signup-link-section p {
-            color: var(--muted);
-            font-size: 14px;
-            margin-bottom: 12px;
+            margin-top:32px;
+            padding-top:24px;
+            border-top:1px solid rgba(255,255,255,.06);
+            text-align:center;
         }
 
         .btn-secondary {
-            display: inline-block;
-            width: 100%;
-            padding: 14px;
-            border-radius: var(--radius);
-            border: 1px solid var(--stroke-2);
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.2s ease;
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--accent);
+            display:block;
+            width:100%;
+            padding:14px;
+            border-radius:var(--radius);
+            border:1px solid var(--stroke-2);
+            background:rgba(255,255,255,.04);
+            color:var(--text);
+            text-decoration:none;
+            font-weight:600;
         }
     </style>
 </head>
 <body class="login-page">
-
 <header class="topnav">
     <div class="nav-inner">
         <a th:href="@{/}" class="nav-logo nav-logo--img">
@@ -133,18 +92,37 @@
     <section class="panel">
         <h1>Accedi</h1>
 
-        <div id="login-error">Email o password errati</div>
+        <!-- Errore login -->
+        <div class="alert alert-error" th:if="${param.error}">
+            Email o password errati
+        </div>
 
-        <form id="loginForm">
+        <!-- Successo logout -->
+        <div class="alert alert-success" th:if="${param.logout}">
+            Logout effettuato con successo
+        </div>
+
+        <form th:action="@{/perform_login}" method="post">
             <div class="field" style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px;">Email</label>
-                <input type="email" id="email" required style="width: 100%; height: 52px; padding: 0 18px; border-radius: var(--radius); border: 1px solid var(--stroke-2); background: var(--panel-2); color: var(--text); outline: none;">
+                <input type="email"
+                       name="username"
+                       required
+                       style="width: 100%; height: 52px; padding: 0 18px; border-radius: var(--radius); border: 1px solid var(--stroke-2); background: var(--panel-2); color: var(--text); outline: none;"
+                       th:classappend="${param.error} ? 'error-border'" />
             </div>
+
             <div class="field" style="margin-bottom: 32px;">
                 <label style="display: block; margin-bottom: 8px; color: var(--muted); font-size: 14px;">Password</label>
-                <input type="password" id="password" required style="width: 100%; height: 52px; padding: 0 18px; border-radius: var(--radius); border: 1px solid var(--stroke-2); background: var(--panel-2); color: var(--text); outline: none;">
+                <input type="password"
+                       name="password"
+                       required
+                       style="width: 100%; height: 52px; padding: 0 18px; border-radius: var(--radius); border: 1px solid var(--stroke-2); background: var(--panel-2); color: var(--text); outline: none;"
+                       th:classappend="${param.error} ? 'error-border'" />
             </div>
-            <button type="submit" style="width: 100%; height: 56px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-weight: 600; font-size: 16px; cursor: pointer; transition: transform 0.1s ease;">
+
+            <button type="submit"
+                    style="width: 100%; height: 56px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-weight: 600; font-size: 16px; cursor: pointer; transition: transform 0.1s ease;">
                 Accedi
             </button>
         </form>
@@ -156,47 +134,6 @@
     </section>
 </div>
 
-<script>
-    const loginForm = document.getElementById("loginForm");
-    const errorMsg = document.getElementById("login-error");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
-    // Rimuove l'errore quando l'utente ricomincia a scrivere
-    [emailInput, passwordInput].forEach(input => {
-        input.addEventListener('input', () => {
-            errorMsg.style.display = "none";
-            input.classList.remove("error-border");
-        });
-    });
-
-    loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: emailInput.value.trim(),
-                    password: passwordInput.value
-                })
-            });
-
-            if (response.ok) {
-                const user = await response.json();
-                localStorage.setItem("user", JSON.stringify(user));
-                window.location.href = "/home";
-            } else {
-                // Visualizzazione errore inline
-                errorMsg.style.display = "block";
-                emailInput.classList.add("error-border");
-                passwordInput.classList.add("error-border");
-            }
-        } catch (err) {
-            errorMsg.innerText = "Impossibile collegarsi al server";
-            errorMsg.style.display = "block";
-        }
-    });
-</script>
+<!-- Rimuoviamo il vecchio script JS con fetch e localStorage -->
 </body>
 </html>
