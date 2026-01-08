@@ -149,7 +149,7 @@
         .field { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-size: 14px; color: rgba(255,255,255,0.7); }
 
-        input[type="text"], input[type="email"], input[type="password"], input[type="url"] {
+        input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="tel"] {
             width: 100%; height: 50px;
             background: rgba(30,30,40,0.8);
             border: 1px solid rgba(255,255,255,0.1);
@@ -289,6 +289,13 @@
                 </div>
             </div>
 
+            <div class="name-row">
+                <div class="field">
+                    <label>Via e Numero Civico</label>
+                    <input type="text" id="viaEnumCivico" maxlength="30" placeholder="Via Roma 10">
+                </div>
+            </div>
+
             <div class="field">
                 <label>Username</label>
                 <input type="text" id="username" required placeholder="Scegli un username unico">
@@ -299,9 +306,15 @@
                 <input type="email" id="email" required placeholder="tuo@email.com">
             </div>
 
-            <div class="field">
-                <label>Password</label>
-                <input type="password" id="password" required minlength="8" placeholder="Minimo 8 caratteri">
+            <div class="name-row">
+                <div class="field">
+                    <label>Password</label>
+                    <input type="password" id="password" required minlength="8" placeholder="Minimo 8 caratteri">
+                </div>
+                <div class="field">
+                    <label>Conferma Password</label>
+                    <input type="password" id="confermaPassword" required placeholder="Ripeti password">
+                </div>
             </div>
 
             <div class="field">
@@ -323,7 +336,7 @@
                 </div>
                 <div class="field">
                     <label>Link Portfolio / IMDB</label>
-                    <input type="url" id="credit" placeholder="https://www.imdb.com/...">
+                    <input type="text" id="credit" placeholder="https://www.imdb.com/...">
                 </div>
             </div>
 
@@ -373,12 +386,17 @@
         }
 
         const tier = document.getElementById('dtype').value;
+
+        // PAYLOAD AGGIORNATO CON I NUOVI CAMPI
         const payload = {
             nome: document.getElementById('nome').value.trim(),
             cognome: document.getElementById('cognome').value.trim(),
+            viaEnumCivico: document.getElementById('viaEnumCivico').value.trim(),
             username: document.getElementById('username').value.trim(),
             email: document.getElementById('email').value.trim(),
             password: document.getElementById('password').value,
+            confermaPassword: document.getElementById('confermaPassword').value,
+
             dtype: tier,
             testataGiornalistica: tier === 'Critico' ? document.getElementById('testata').value.trim() : null,
             casaProduzione: tier === 'Fedele' ? document.getElementById('casa').value.trim() : null,

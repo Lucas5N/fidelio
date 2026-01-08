@@ -50,7 +50,7 @@
                 <!-- Se hai dati -->
                 <a class="card"
                    th:each="film : ${popularFilms}"
-                   th:href="@{/movies/{id}(id=${film.tmdbId})}">
+                   th:href="@{/film/{id}(id=${film.tmdbId})}">
                     <div class="card-inner">
                         <div class="poster">
                             <!-- Se hai posterUrl -->
@@ -106,7 +106,7 @@
             <div class="grid">
                 <a class="card"
                    th:each="film : ${newReleases}"
-                   th:href="@{/movies/{id}(id=${film.tmdbId})}">
+                   th:href="@{/film/{id}(id=${film.tmdbId})}">
 
                     <div class="card-inner">
                         <div class="poster">
@@ -118,7 +118,7 @@
                             <div th:if="${film.posterUrl == null}" class="poster-fallback">
                                 <span th:text="${film.title}">Film</span>
                             </div>
-
+2
                             <!-- Hover overlay (DEVE stare dentro .poster) -->
                             <div class="poster-overlay">
                                 <div class="rating">

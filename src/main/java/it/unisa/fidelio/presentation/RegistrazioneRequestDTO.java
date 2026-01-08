@@ -7,13 +7,17 @@ public class RegistrazioneRequestDTO {
     private String username;
     private String email;
     private String password;
+    private String confermaPassword;
+
     private String nome;
     private String cognome;
-    private String dtype; // Cinefilo, Critico, Fedele
+
+    // NUOVO CAMPO
+    private String viaEnumCivico;
+
+    private String dtype;
     private String testataGiornalistica;
     private String casaProduzione;
     private String creditReference;
-
-    // Campo aggiunto per ricevere l'immagine dal frontend in formato Base64
     private String immagineBase64;
 }

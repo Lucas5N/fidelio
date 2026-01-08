@@ -3,15 +3,14 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title th:text="${movie.title} + ' • Fidelio'">Movie • Fidelio</title>
-    <link rel="stylesheet" th:href="@{/css/movie-details.css}">
-    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <title th:text="${movie?.title} + ' • Fidelio'">Movie • Fidelio</title>
+    <link rel="stylesheet" th:href="@{/css/movie-details.css}" />
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
 </head>
 <body>
 
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<!-- HERO with backdrop -->
 <section class="movie-hero" th:style="${movie.backdropUrl != ''} ? 'background-image: url(' + ${movie.backdropUrl} + ');' : ''">
     <div class="hero-scrim"></div>
     <div class="hero-content">
@@ -32,6 +31,7 @@
                     <span class="votes" th:text="${movie.votes}">1200</span>
                 </div>
             </div>
+
             <p class="tagline" th:if="${movie.tagline != ''}" th:text="${movie.tagline}">Tagline</p>
             <div class="facts">
                 <span th:if="${movie.runtimeLabel != ''}" th:text="${movie.runtimeLabel}">2h 10m</span>
@@ -43,7 +43,6 @@
                 </span>
             </div>
 
-            <!-- ACTIONS -->
             <div class="actions">
                 <button class="btn primary" type="button" th:disabled="${utenteLoggato == null}">Log</button>
                 <button class="btn" type="button" th:disabled="${utenteLoggato == null}">Watchlist</button>
@@ -71,7 +70,6 @@
     </div>
 </section>
 
-<!-- CAST -->
 <section class="movie-section" th:if="${!movie.castTop.isEmpty()}">
     <div class="section-head">
         <h2>Cast</h2>
@@ -79,7 +77,7 @@
     <div class="cast-row">
         <a class="cast-card" th:each="p : ${movie.castTop}" th:href="@{/people/{id}(id=${p.id})}">
             <div class="avatar">
-                <img th:if="${p.profileUrl != ''}" th:src="${p.profileUrl}" th:alt="${p.name}">
+                <img th:if="${p.profileUrl != ''}" th:src="${p.profileUrl}" th:alt="${p.name}" />
                 <div class="avatar-fallback" th:if="${p.profileUrl == ''}"></div>
             </div>
             <div class="cast-meta">
@@ -90,13 +88,12 @@
     </div>
 </section>
 
-<!-- RECENSIONI -->
 <section class="section reviews-section">
     <div class="section-head reviews-head">
         <h2>Recensioni</h2>
     </div>
 
-    <div class="reviews-stack" th:if="${!#lists.isEmpty(popularReviews)}">
+    <div class="reviews-stack" th:if="${popularReviews != null and !popularReviews.isEmpty()}">
         <article class="review-row" th:each="r : ${popularReviews}">
             <header class="review-head">
                 <div class="review-user">
@@ -104,11 +101,17 @@
                     <div class="user-meta">
                         <div class="user-row">
                             <span class="username" th:text="${r.username}">user</span>
+
                             <span class="verified-badge" th:if="${r.dtype == 'Critico'}" title="Critico verificato">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="12" cy="12" r="10" fill="#1DA1F2"/>
                                     <path d="M9 12L11 14L15 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
+                            </span>
+
+                            <span th:if="${isAdmin and tutteLeSegnalazioni.contains(r.localReviewId)}"
+                                  style="background: #ff4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px; font-weight: bold;">
+                                ⚠️ SEGNALATA
                             </span>
                         </div>
                         <div class="subline">
@@ -124,58 +127,60 @@
                 <p th:text="${r.contentPreview}">...</p>
             </div>
 
-            <!-- INTERAZIONI (server-side authentication) -->
             <div class="review-actions" th:if="${r.local}">
-                <!-- LIKE -->
+
                 <form class="like-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/like'}"
                       method="post"
-                      th:if="${utenteLoggato != null and !likeGiaFatti.contains(r.localReviewId) and !r.username.equals(utenteLoggato.username)}">
+                      th:if="${utenteLoggato != null and (likeGiaFatti == null or !likeGiaFatti.contains(r.localReviewId)) and !r.username.equals(utenteLoggato.username)}">
                     <button type="submit" class="btn-vote like-btn">
                         👍 <span class="like-count" th:text="${r.numLike}">0</span>
                     </button>
                 </form>
-                <span th:if="${utenteLoggato != null and likeGiaFatti.contains(r.localReviewId)}"
+
+                <span th:if="${utenteLoggato != null and likeGiaFatti != null and likeGiaFatti.contains(r.localReviewId)}"
                       class="already-voted">👍 Già apprezzata (<span th:text="${r.numLike}">0</span>)</span>
+
                 <span th:if="${utenteLoggato == null or (utenteLoggato != null and r.username.equals(utenteLoggato.username))}"
                       class="like-display" style="opacity: 0.7;">👍 <span th:text="${r.numLike}">0</span></span>
 
-                <!-- DISLIKE -->
                 <form class="dislike-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/dislike'}"
                       method="post"
-                      th:if="${utenteLoggato != null and !dislikeGiaFatti.contains(r.localReviewId) and !r.username.equals(utenteLoggato.username)}">
+                      th:if="${utenteLoggato != null and (dislikeGiaFatti == null or !dislikeGiaFatti.contains(r.localReviewId)) and !r.username.equals(utenteLoggato.username)}">
                     <button type="submit" class="btn-vote dislike-btn">
                         👎 <span class="dislike-count" th:text="${r.numDislike}">0</span>
                     </button>
                 </form>
-                <span th:if="${utenteLoggato != null and dislikeGiaFatti.contains(r.localReviewId)}"
+
+                <span th:if="${utenteLoggato != null and dislikeGiaFatti != null and dislikeGiaFatti.contains(r.localReviewId)}"
                       class="already-voted">👎 Già non apprezzata (<span th:text="${r.numDislike}">0</span>)</span>
+
                 <span th:if="${utenteLoggato == null or (utenteLoggato != null and r.username.equals(utenteLoggato.username))}"
                       class="dislike-display" style="opacity: 0.7;">👎 <span th:text="${r.numDislike}">0</span></span>
 
-                <!-- ELIMINA (only for review author) -->
                 <form class="delete-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/elimina'}"
                       method="post"
-                      th:if="${utenteLoggato != null and r.username.equals(utenteLoggato.username)}"
-                      onsubmit="return confirm('Vuoi davvero eliminare questa recensione?')">
-                    <button type="submit" class="btn-action btn-delete">Elimina</button>
+                      th:if="${utenteLoggato != null and (r.username.equals(utenteLoggato.username) or isAdmin)}"
+                      onsubmit="return confirm('Sei sicuro di voler eliminare questa recensione?')">
+                    <button type="submit" class="btn-action btn-delete">
+                        <span th:text="${isAdmin and !r.username.equals(utenteLoggato.username)} ? 'Elimina (Admin)' : 'Elimina'">Elimina</span>
+                    </button>
                 </form>
 
-                <!-- SEGNALA (not for own reviews) -->
                 <form class="report-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/segnala'}"
                       method="post"
-                      th:if="${utenteLoggato != null and !segnalazioniGiaFatte.contains(r.localReviewId) and !r.username.equals(utenteLoggato.username)}">
+                      th:if="${utenteLoggato != null and (segnalazioniGiaFatte == null or !segnalazioniGiaFatte.contains(r.localReviewId)) and !r.username.equals(utenteLoggato.username)}">
                     <button type="submit" class="btn-action btn-report">⚠️ Segnala</button>
                 </form>
-                <span th:if="${utenteLoggato != null and segnalazioniGiaFatte.contains(r.localReviewId)}"
+
+                <span th:if="${utenteLoggato != null and segnalazioniGiaFatte != null and segnalazioniGiaFatte.contains(r.localReviewId)}"
                       class="already-reported">⚠️ Già segnalata</span>
             </div>
 
-            <!-- COMMENTI -->
-            <div class="comments-section" th:if="${r.comments != null and !#lists.isEmpty(r.comments)}">
+            <div class="comments-section" th:if="${r.comments != null and !r.comments.isEmpty()}">
                 <div class="comment" th:each="c : ${r.comments}">
                     <div class="comment-header">
                         <strong th:text="${c.username}">user</strong>
@@ -191,7 +196,6 @@
                 </div>
             </div>
 
-            <!-- FORM COMMENTO (only for logged in users) -->
             <div class="add-comment-section" th:if="${r.local and utenteLoggato != null}">
                 <form class="comment-form" th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/commenta'}" method="post">
                     <textarea name="testo" placeholder="Scrivi un commento..." required></textarea>
@@ -201,18 +205,17 @@
         </article>
     </div>
 
-    <div class="empty-state" th:if="${#lists.isEmpty(popularReviews)}">
+    <div class="empty-state" th:if="${popularReviews == null or popularReviews.isEmpty()}">
         <p>Nessuna recensione ancora.</p>
     </div>
 </section>
 
-<!-- MODAL SCRIVI RECENSIONE -->
 <div id="reviewModal" class="modal-overlay">
     <div class="modal-container">
         <button class="modal-close" onclick="closeReviewModal()">&times;</button>
         <div class="modal-flex">
             <div class="modal-poster-side">
-                <img th:if="${movie.posterUrl != ''}" th:src="${movie.posterUrl}" th:alt="${movie.title}" class="review-poster-img">
+                <img th:if="${movie.posterUrl != ''}" th:src="${movie.posterUrl}" th:alt="${movie.title}" class="review-poster-img" />
             </div>
             <div class="modal-form-side">
                 <h2 class="review-title">Scrivi Recensione</h2>
@@ -227,7 +230,7 @@
                     <textarea name="testo" placeholder="La tua recensione..." required></textarea>
                     <div class="review-options">
                         <label class="spoiler-check">
-                            <input type="checkbox" name="spoilerAlert"> Contiene Spoiler
+                            <input type="checkbox" name="spoilerAlert" /> Contiene Spoiler
                         </label>
                     </div>
                     <button type="submit" class="btn-pubblica">Pubblica Recensione</button>

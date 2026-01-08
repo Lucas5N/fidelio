@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,36 +39,39 @@ public class RecensioneService {
         this.segnalazioneRepository = segnalazioneRepository;
     }
 
-    // === METODI PER THREE-TIER ARCHITECTURE (MovieController) ===
-
-    public java.util.Set<Integer> getLikeGiaFatti(int utenteId) {
+    public Set<Integer> getLikeGiaFatti(int utenteId) {
         return recensioneInterazioneRepository
                 .findByUtenteIdAndTipo(utenteId, RecensioneInterazione.TipoInterazione.LIKE)
                 .stream()
                 .map(inter -> inter.getRecensione().getId())
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
     }
 
-    public java.util.Set<Integer> getDislikeGiaFatti(int utenteId) {
+    public Set<Integer> getDislikeGiaFatti(int utenteId) {
         return recensioneInterazioneRepository
                 .findByUtenteIdAndTipo(utenteId, RecensioneInterazione.TipoInterazione.DISLIKE)
                 .stream()
                 .map(inter -> inter.getRecensione().getId())
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
     }
 
-    public java.util.Set<Integer> getSegnalazioniGiaFatte(int utenteId) {
+    public Set<Integer> getSegnalazioniGiaFatte(int utenteId) {
         return segnalazioneRepository
                 .findByAutoreId(utenteId)
                 .stream()
                 .map(seg -> seg.getRecensione().getId())
-                .collect(java.util.stream.Collectors.toSet());
+                .collect(Collectors.toSet());
+    }
+
+    public Set<Integer> getTutteLeRecensioniSegnalate(Long filmId) {
+        return segnalazioneRepository.findAll().stream()
+                .filter(s -> s.getRecensione().getFilmTmdbId().equals(filmId))
+                .map(s -> s.getRecensione().getId())
+                .collect(Collectors.toSet());
     }
 
     public List<PopularReviewViewDTO> getTutteLeRecensioni(Long filmId) {
         List<PopularReviewViewDTO> listaFinale = new ArrayList<>();
-
-        // RECENSIONI LOCALI
         List<Recensione> locali = recensioneRepo.findByFilmTmdbIdOrderByNumLikeDesc(filmId);
         for (Recensione r : locali) {
             List<CommentoDTO> commentiLocali = commentoRepo
@@ -90,11 +94,10 @@ public class RecensioneService {
                     r.getNumLike(),
                     r.getNumDislike(),
                     commentiLocali,
-                    r.getAutore().getDtype()  // per badge critico
+                    r.getAutore().getDtype()
             ));
         }
 
-        // RECENSIONI TMDB
         TmdbReviewResponseDTO tmdbRes = tmdbClient.getMovieReviews(filmId, 1);
         if (tmdbRes != null && tmdbRes.results() != null) {
             tmdbRes.results().stream().limit(10).forEach(tr -> {
@@ -116,8 +119,20 @@ public class RecensioneService {
                 ));
             });
         }
-
         return listaFinale;
+    }
+
+    @Transactional
+    public void eliminaRecensione(Integer recensioneId, Utente utenteCorrente) {
+        Recensione recensione = recensioneRepo.findById(recensioneId)
+                .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
+
+        // L'admin può eliminare qualsiasi recensione locale
+        if (!recensione.getAutore().getId().equals(utenteCorrente.getId()) && !utenteCorrente.getAmministratore()) {
+            throw new SecurityException("Non autorizzato");
+        }
+
+        recensioneRepo.delete(recensione);
     }
 
     @Transactional
@@ -135,115 +150,71 @@ public class RecensioneService {
     }
 
     @Transactional
-    public void aggiornaRecensione(Integer recensioneId, String testo, Double voto, Utente utenteCorrente) {
-        Recensione r = recensioneRepo.findById(recensioneId)
-                .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
-        if (!r.getAutore().getId().equals(utenteCorrente.getId())) {
-            throw new SecurityException("Non autorizzato");
-        }
-        r.setTesto(testo);
-        r.setVoto(voto);
-        recensioneRepo.save(r);
-    }
-
-    @Transactional
-    public void eliminaRecensione(Integer recensioneId, Utente utenteCorrente) {
-        Recensione recensione = recensioneRepo.findById(recensioneId)
-                .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
-
-        if (!recensione.getAutore().getId().equals(utenteCorrente.getId())) {
-            throw new SecurityException("Non autorizzato");
-        }
-
-        recensioneRepo.delete(recensione);
-    }
-
-    @Transactional
     public void aggiungiLike(Integer recensioneId, int utenteId) {
-        if (recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(
-                utenteId, recensioneId, RecensioneInterazione.TipoInterazione.LIKE)) {
-            return;
-        }
-
-        Recensione r = recensioneRepo.findById(recensioneId)
-                .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
-
-        if (r.getAutore().getId().equals(utenteId)) {
-            return;
-        }
-
-        r.setNumLike(r.getNumLike() + 1);
-        recensioneRepo.save(r);
-
-        RecensioneInterazione inter = new RecensioneInterazione();
-        inter.setUtente(utenteRepository.getReferenceById(utenteId));
-        inter.setRecensione(r);
-        inter.setTipo(RecensioneInterazione.TipoInterazione.LIKE);
-        recensioneInterazioneRepository.save(inter);
+        gestisciInterazione(recensioneId, utenteId, RecensioneInterazione.TipoInterazione.LIKE);
     }
 
     @Transactional
     public void aggiungiDislike(Integer recensioneId, int utenteId) {
-        if (recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(
-                utenteId, recensioneId, RecensioneInterazione.TipoInterazione.DISLIKE)) {
+        gestisciInterazione(recensioneId, utenteId, RecensioneInterazione.TipoInterazione.DISLIKE);
+    }
+
+    private void gestisciInterazione(Integer recensioneId, int utenteId, RecensioneInterazione.TipoInterazione tipo) {
+        if (recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(utenteId, recensioneId, tipo)) {
             return;
         }
 
         Recensione r = recensioneRepo.findById(recensioneId)
                 .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
 
-        if (r.getAutore().getId().equals(utenteId)) {
-            return;
+        if (r.getAutore().getId().equals(utenteId)) return;
+
+        if (tipo == RecensioneInterazione.TipoInterazione.LIKE) {
+            r.setNumLike(r.getNumLike() + 1);
+        } else {
+            r.setNumDislike(r.getNumDislike() + 1);
         }
 
-        r.setNumDislike(r.getNumDislike() + 1);
         recensioneRepo.save(r);
 
         RecensioneInterazione inter = new RecensioneInterazione();
         inter.setUtente(utenteRepository.getReferenceById(utenteId));
         inter.setRecensione(r);
-        inter.setTipo(RecensioneInterazione.TipoInterazione.DISLIKE);
+        inter.setTipo(tipo);
         recensioneInterazioneRepository.save(inter);
     }
 
     @Transactional
     public void aggiungiCommento(Integer recensioneId, Utente autore, String testo) {
-        Recensione recensione = recensioneRepo.findById(recensioneId)
+        Recensione r = recensioneRepo.findById(recensioneId)
                 .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
 
-        // Removed restriction: authors can now comment on their own reviews
-        Commento commento = new Commento();
-        commento.setAutore(autore);
-        commento.setTesto(testo);
-        commento.setDataCreazione(Instant.now());
-        commento.setRecensione(recensione);
-        commentoRepo.save(commento);
+        Commento c = new Commento();
+        c.setRecensione(r);
+        c.setAutore(autore);
+        c.setTesto(testo);
+        c.setDataCreazione(Instant.now());
+        commentoRepo.save(c);
     }
 
-    // === FUNZIONE SEGNALAZIONE RECENSIONE ===
     @Transactional
     public void segnalaRecensione(Integer recensioneId, int autoreId, String motivo) {
         Recensione recensione = recensioneRepo.findById(recensioneId)
                 .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
 
-        // 1. Non puoi segnalare la tua recensione
         if (recensione.getAutore().getId().equals(autoreId)) {
             throw new IllegalArgumentException("Non puoi segnalare la tua recensione.");
         }
-
-        // 2. Non puoi segnalare due volte la stessa recensione
         if (segnalazioneRepository.existsByRecensioneIdAndAutoreId(recensioneId, autoreId)) {
             throw new IllegalArgumentException("Hai già segnalato questa recensione.");
         }
 
-        // Crea la segnalazione
         Segnalazione segnalazione = new Segnalazione();
         segnalazione.setRecensione(recensione);
         segnalazione.setAutore(utenteRepository.getReferenceById(autoreId));
         segnalazione.setMotivo(motivo != null && !motivo.trim().isEmpty() ? motivo.trim() : "Contenuto inappropriato");
         segnalazione.setDataSegnalazione(Instant.now());
-        segnalazione.setStato("APERTA");  // come da tuo @ColumnDefault
-
+        segnalazione.setStato("APERTA");
         segnalazioneRepository.save(segnalazione);
     }
 

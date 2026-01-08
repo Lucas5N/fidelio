@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilo Utente - Fidelio</title>
+
+    <link rel="stylesheet" th:href="@{/css/components.css}"> <link rel="stylesheet" th:href="@{/css/profile.css}">    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+</head>
+<body class="profile-page">
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="profile-container">
+
+    <aside class="profile-sidebar">
+        <img th:if="${utenteCorrente.immagineProfilo != null}"
+             th:src="@{'data:image/jpeg;base64,' + ${@utenteService.encodeToBase64(utenteCorrente.immagineProfilo)}}"
+             class="profile-avatar-large" alt="Avatar">
+
+        <img th:unless="${utenteCorrente.immagineProfilo != null}"
+             src="https://ui-avatars.com/api/?name=User&background=random&color=fff&size=150"
+             class="profile-avatar-large" alt="Default Avatar">
+
+        <h1 class="profile-name" th:text="${utenteCorrente.nome + ' ' + utenteCorrente.cognome}">Nome Cognome</h1>
+        <p class="profile-username" th:text="'@' + ${utenteCorrente.username}">@username</p>
+
+        <div class="profile-badge" th:text="${utenteCorrente.dtype}">CINEFILO</div>
+
+        <p class="profile-bio" th:text="${utenteCorrente.bio != null && !utenteCorrente.bio.isEmpty()} ? ${utenteCorrente.bio} : 'Nessuna biografia inserita...'">
+            Lorem ipsum dolor sit amet...
+        </p>
+
+        <button class="btn-edit" onclick="openModal()">Modifica Profilo</button>
+
+        <div style="margin-top: 20px; font-size: 0.85rem; color: #888;" th:if="${utenteCorrente.dtype == 'Critico'}">
+            <p>Testata: <span style="color:white" th:text="${utenteCorrente.testataGiornalistica}"></span></p>
+        </div>
+    </aside>
+
+    <main class="profile-content">
+
+        <section>
+            <h2 class="section-title">Le tue Recensioni</h2>
+
+            <div class="reviews-grid" th:if="${recensioni != null and !recensioni.isEmpty()}">
+                <div class="review-card" th:each="recensione : ${recensioni}">
+                    <div class="review-header">
+                        <span th:text="${#temporals.format(recensione.dataCreazione, 'dd/MM/yyyy')}">01/01/2024</span>
+                        <div class="review-stars">
+                            <span th:text="${recensione.voto} + '/5 ★'">5/5 ★</span>
+                        </div>
+                    </div>
+                    <p style="font-weight:bold; margin-bottom:5px;">Film ID: <span th:text="${recensione.filmTmdbId}">123</span></p>
+                    <p class="review-text" th:text="${recensione.testo}">Testo della recensione...</p>
+                </div>
+            </div>
+
+            <div class="placeholder-box" th:if="${recensioni == null or recensioni.isEmpty()}">
+                <div class="placeholder-icon">📝</div>
+                <p>Non hai ancora scritto nessuna recensione.</p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">Liste Private</h2>
+
+            <div class="lists-grid" th:if="${listePrivate != null and !listePrivate.isEmpty()}">
+                <div class="review-card" th:each="lista : ${listePrivate}">
+                    <h3 th:text="${lista.nome}">Nome Lista</h3>
+                    <p th:text="${lista.descrizione}" style="font-size:0.9rem; color:#aaa;"></p>
+                </div>
+            </div>
+
+            <div class="placeholder-box" th:if="${listePrivate == null or listePrivate.isEmpty()}">
+                <div class="placeholder-icon">🔒</div>
+                <p>Nessuna lista privata creata (Coming Soon).</p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="section-title">Raccomandati per Te</h2>
+            <div class="placeholder-box">
+                <div class="placeholder-icon">🤖</div>
+                <p>L'algoritmo sta elaborando i tuoi gusti... torna presto per i consigli personalizzati!</p>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h2 style="margin-bottom: 20px;">Modifica Profilo</h2>
+
+        <form class="modal-form" th:action="@{/profilo/aggiorna}" method="POST" enctype="multipart/form-data">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="editNome">Nome</label>
+                    <input type="text" id="editNome" name="nome" th:value="${utenteCorrente.nome}" required>
+                </div>
+                <div>
+                    <label for="editCognome">Cognome</label>
+                    <input type="text" id="editCognome" name="cognome" th:value="${utenteCorrente.cognome}" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="editUsername">Username</label>
+                    <input type="text" id="editUsername" name="username" th:value="${utenteCorrente.username}" required>
+                </div>
+                <div>
+                    <label for="editEmail">Email</label>
+                    <input type="email" id="editEmail" name="email" th:value="${utenteCorrente.email}" required>
+                </div>
+            </div>
+
+            <label for="editIndirizzo">Via e Numero Civico</label>
+            <input type="text" id="editIndirizzo" name="viaENumCivico" th:value="${utenteCorrente.viaENumCivico}">
+
+            <label for="editPass">Nuova Password (lascia vuoto per non cambiare)</label>
+            <input type="password" id="editPass" name="nuovaPassword" placeholder="••••••••">
+
+            <div th:if="${utenteCorrente.dtype == 'Critico'}">
+                <label for="editTestata">Testata Giornalistica</label>
+                <input type="text" id="editTestata" name="testata" th:value="${utenteCorrente.testataGiornalistica}">
+            </div>
+
+            <div th:if="${utenteCorrente.dtype == 'Fedele'}">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label for="editCasa">Casa Produzione</label>
+                        <input type="text" id="editCasa" name="casa" th:value="${utenteCorrente.casaProduzione}">
+                    </div>
+                    <div>
+                        <label for="editCredit">Credit Reference</label>
+                        <input type="text" id="editCredit" name="credit" th:value="${utenteCorrente.creditReference}">
+                    </div>
+                </div>
+            </div>
+
+            <label for="editBio">Biografia</label>
+            <textarea id="editBio" name="bio" rows="3" th:text="${utenteCorrente.bio}"></textarea>
+
+            <label for="editImg">Nuova Foto Profilo</label>
+            <input type="file" id="editImg" name="immagine" accept="image/*">
+
+            <div class="modal-actions">
+                <button type="submit" class="btn-save">Salva Modifiche</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+<script>
+    const modal = document.getElementById('editModal');
+
+    function openModal() {
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    // Chiudi se clicchi fuori dal box
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+</script>
+
+</body>
+</html>

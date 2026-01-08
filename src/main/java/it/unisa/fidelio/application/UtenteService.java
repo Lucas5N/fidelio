@@ -67,10 +67,11 @@ public class UtenteService implements UserDetailsService {
                 u.getId(),
                 u.getUsername(),
                 u.getEmail(),
-                u.getDtype(),
-                u.getBio(),
+                u.getNome(),
+                u.getCognome(),
+                u.getDtype(), u.getBio(),
                 immagineBase64,
-                u.getLivelloAccesso()
+                u.getAmministratore()
         );
     }
 
