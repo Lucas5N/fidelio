@@ -450,6 +450,18 @@
 <script th:src="@{/js/home.js}">
 </script>
 <script th:src="@{/js/auth.js}"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // Thymeleaf inietta l'oggetto Java direttamente qui come JSON
+    const serverUser = /*[[${userDTO}]]*/ null;
 
+    if (serverUser) {
+        console.log("Utente sincronizzato:", serverUser);
+        localStorage.setItem("user", JSON.stringify(serverUser));
+    } else {
+        localStorage.removeItem("user");
+    }
+    /*]]>*/
+</script>
 </body>
 </html>

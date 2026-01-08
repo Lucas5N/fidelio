@@ -394,6 +394,8 @@
             });
 
             if (response.ok) {
+                const userDTO = await response.json();
+                localStorage.setItem("user", JSON.stringify(userDTO));
                 window.location.href = "/home";
             } else {
                 const text = await response.text();
