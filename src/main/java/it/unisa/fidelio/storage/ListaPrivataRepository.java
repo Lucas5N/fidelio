@@ -9,8 +9,8 @@ import java.util.Optional;
 @Repository
 public interface ListaPrivataRepository extends JpaRepository<ListaPrivata, Integer> {
 
-    // Trova tutte le liste di un utente
-    List<ListaPrivata> findByProprietarioUsername(String username);
+    List<ListaPrivata> findByProprietarioEmail(String email);
+
 
     // Trova una lista specifica per proprietario e nome (es. "Film Visti")
     Optional<ListaPrivata> findByProprietarioUsernameAndNome(String username, String nome);

@@ -2,12 +2,16 @@ package it.unisa.fidelio.application;
 
 import it.unisa.fidelio.presentation.TmdbMovieCreditsDTO;
 import it.unisa.fidelio.presentation.TmdbMovieDetailsDTO;
+import it.unisa.fidelio.presentation.TmdbMovieDto;
 import it.unisa.fidelio.presentation.TmdbReviewResponseDTO;
 import it.unisa.fidelio.storage.api_data.TmdbGenreListResponse;
 import it.unisa.fidelio.storage.api_data.TmdbMovieListResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
+import java.util.Collection;
+import java.util.List;
 
 @Component
 public class TmdbClient {
@@ -54,6 +58,35 @@ public class TmdbClient {
                 .retrieve()
                 .body(TmdbMovieDetailsDTO.class);
     }
+
+    public List<TmdbMovieDto> getMoviesByIds(Collection<Long> tmdbIds) {
+        return tmdbIds.stream()
+                .map(this::getMovieSummary)
+                .toList();
+    }
+
+
+    public TmdbMovieDto getMovieSummary(Long tmdbId) {
+        TmdbMovieDetailsDTO details = getMovieDetails(tmdbId);
+
+        List<Integer> genreIds =
+                details.genres() == null
+                        ? List.of()
+                        : details.genres().stream()
+                        .map(g -> g.id())
+                        .toList();
+
+        return new TmdbMovieDto(
+                details.id(),
+                details.title(),
+                details.posterPath(),
+                details.releaseDate(),
+                details.voteAverage(),
+                genreIds
+        );
+
+    }
+
 
     public TmdbMovieListResponse getPopular(int page) {
         return restClient.get()

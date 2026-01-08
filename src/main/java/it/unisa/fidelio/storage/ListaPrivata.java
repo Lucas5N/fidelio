@@ -9,10 +9,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -56,15 +53,8 @@ public class ListaPrivata {
             name = "lista_privata_tmdb",
             joinColumns = @JoinColumn(name = "lista_id")
     )
-    @Column(name = "tmdb_id", nullable = false)
-    private Set<Long> tmdbIds = new LinkedHashSet<>();
-
-    @ElementCollection
-    @CollectionTable(
-            name = "lista_privata_tmdb",
-            joinColumns = @JoinColumn(name = "lista_id")
-    )
     @MapKeyColumn(name = "tmdb_id")
     @Column(name = "data_visione")
-    private Map<Long, LocalDate> dataVisioneTmdb = new HashMap<>();
+    private Map<Long, LocalDate> filmTmdb = new LinkedHashMap<>();
+
 }

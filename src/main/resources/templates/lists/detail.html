@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+
+<head>
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/lists.css}">
+    <title>Dettaglio lista</title>
+</head>
+<body>
+
+<div th:replace="fragments/navbar :: navbar"></div>
+
+<div class="page">
+    <div class="content">
+        <section class="section">
+            <div class="section-head">
+                <h2 th:text="${listName}">Nome lista</h2>
+            </div>
+
+            <div class="grid">
+                <div class="card" th:each="movie : ${movies}">
+                    <div class="card-inner">
+                        <div class="poster">
+                            <img th:if="${movie.posterPath != null}"
+                                 th:src="'https://image.tmdb.org/t/p/w300' + ${movie.posterPath}">
+
+                            <div th:if="${movie.posterPath == null}"
+                                 class="poster-fallback"
+                                 th:text="${movie.title}">
+                            </div>
+
+                            <div class="poster-overlay">
+                                <span class="rating"
+                                      th:text="${#numbers.formatDecimal(movie.voteAverage,1,1)}">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+</body>
+</html>

@@ -20,6 +20,35 @@ body {
     color: var(--text);
 }
 
+.alert.success{
+    margin: 16px auto;
+    max-width: 680px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(46, 204, 113, 0.15);
+    border: 1px solid rgba(46, 204, 113, 0.35);
+    color: #bff3d1;
+    font-weight: 600;
+}
+
+@keyframes alert-in {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert.hide {
+    animation: alert-out 0.35s ease forwards;
+}
+
+@keyframes alert-out {
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
 /* ===== HERO SECTION ===== */
 .movie-hero {
     position: relative;
@@ -465,6 +494,49 @@ body {
     cursor: pointer;
     font-weight: 600;
 }
+
+/* ================= ADD TO LIST MODAL ================= */
+
+.addlist-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2100;
+}
+
+.addlist-overlay.addlist-open {
+    display: flex;
+}
+
+.addlist-card {
+    width: 100%;
+    max-width: 520px;
+    background: rgba(15,15,18,.95);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 18px;
+    padding: 22px 22px 24px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.55);
+}
+
+.addlist-card h3 {
+    margin: 0 0 14px 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: rgba(255,255,255,.95);
+}
+
+.addlist-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+
 
 /* ===== MODAL RECENSIONE ===== */
 .modal-overlay {
