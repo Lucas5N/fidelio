@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 
 @Controller
-// Il controller gestisce ORA SOLO la base /film e le sue API
 @RequestMapping("/film")
 public class GestioneFilmController {
 
@@ -36,10 +35,7 @@ public class GestioneFilmController {
         this.tmdbClient = tmdbClient;
     }
 
-    // ==========================================
-    // 1. API RICERCA FILM (Mappato su /film/api/search)
-    // ==========================================
-
+    // API Ricerca Film
     @GetMapping("/api/search")
     @ResponseBody
     public ResponseEntity<?> ricercaFilm(@RequestParam(required = false) String query,
@@ -56,10 +52,7 @@ public class GestioneFilmController {
         return ResponseEntity.ok(risultati);
     }
 
-    // ==========================================
-    // 2. API RICERCA FILTRATA (Mappato su /film/api/search/filter)
-    // ==========================================
-
+    // API Ricerca Filtrata
     @GetMapping("/api/search/filter")
     @ResponseBody
     public ResponseEntity<?> ricercaFiltrata(@RequestParam(required = false) String genere,
@@ -70,7 +63,6 @@ public class GestioneFilmController {
 
         String finalGenere = genere != null ? genere : "";
         String finalAnno = anno != null ? anno : "";
-
 
         if (!finalGenere.isEmpty() && !finalGenere.matches("[a-zA-Z ]+")) {
             return ResponseEntity.badRequest().build();
@@ -85,10 +77,7 @@ public class GestioneFilmController {
         return ResponseEntity.ok(risultati);
     }
 
-    // ==========================================
-    // 3. API CREAZIONE LISTA (Mappato su /film/api/lista)
-    // ==========================================
-
+    // API Creazione Lista
     @PostMapping("/api/lista")
     @ResponseBody
     public ResponseEntity<?> creaLista(@RequestParam(required = false) String titolo,
@@ -112,13 +101,7 @@ public class GestioneFilmController {
         return ResponseEntity.ok("Lista creata con successo");
     }
 
-    // ==========================================
-    // 4. VISUALIZZAZIONE DETTAGLI (Mappato su /film/{filmId})
-    // ==========================================
-
-    /**
-     * Mappato su /{filmId}, che combinato con il prefisso di classe "/film" risolve /film/{filmId}.
-     */
+    // Visualizzazione Dettagli
     @GetMapping("/{filmId}")
     public String visualizzaDettagli(@PathVariable Long filmId,
                                      Model model,

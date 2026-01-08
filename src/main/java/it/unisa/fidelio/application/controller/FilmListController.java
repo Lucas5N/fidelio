@@ -18,7 +18,7 @@ public class FilmListController {
     }
 
     /**
-     * Mappato direttamente sulla radice /filmlist, evitando qualsiasi conflitto.
+     * Mappato direttamente sulla radice /filmlist.
      */
     @GetMapping("/filmlist")
     public String filmListPage(Model model) {
