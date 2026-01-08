@@ -18,14 +18,25 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable) // ← DISABILITA CSRF COMPLETAMENTE
+        http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", "/home", "/movies/**", "/css/**", "/js/**", "/images/**",
-                                "/api/auth/**", "/api/registrazione/**",
-                                "/login", "/signup", "/register", "/error"
+                                "/",
+                                "/home",
+                                "/film/**",      // <--- AGGIUNGI QUESTO: Permette dettagli e ricerca API
+                                "/movies/**",    // Puoi lasciarlo se hai ancora vecchi link, altrimenti toglilo
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/api/**",       // Utile se hai altre API
+                                "/login",
+                                "/signup",
+                                "/register",
+                                "/error",
+                                "/search",
+                                "/filmlist"
                         ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

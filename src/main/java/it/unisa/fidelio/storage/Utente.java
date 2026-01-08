@@ -65,8 +65,11 @@ public class Utente {
     @Column(name = "credit_reference")
     private String creditReference;
 
-    @Column(name = "livello_accesso", length = 50)
-    private String livelloAccesso;
+    @Column(name = "Amministratore")
+    private Boolean Amministratore ;
+
+    @Column(name = "via_e_num_civico")
+    private String viaENumCivico ;
 
     // Relazioni (rimaste invariate)
     @OneToMany(mappedBy = "autore")

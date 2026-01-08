@@ -32,7 +32,6 @@ public class TmdbClient {
                 .build();
     }
 
-
     public TmdbMovieListResponse searchMovies(String query, int page) {
         return restClient.get()
                 .uri(uri -> uri.path("/search/movie")
@@ -111,4 +110,28 @@ public class TmdbClient {
                 .body(TmdbReviewResponseDTO.class);
     }
 
+    // --- METODO AGGIUNTO PER LA RICERCA FILTRATA ---
+    public TmdbMovieListResponse discoverMovies(Integer genreId, String year, int page) {
+        return restClient.get()
+                .uri(uriBuilder -> {
+                    var builder = uriBuilder.path("/discover/movie")
+                            .queryParam("api_key", apiKey)
+                            .queryParam("language", language)
+                            .queryParam("region", region)
+                            .queryParam("sort_by", "popularity.desc") // Ordina per popolarità
+                            .queryParam("page", page);
+
+                    if (genreId != null) {
+                        builder.queryParam("with_genres", genreId);
+                    }
+
+                    if (year != null && !year.isBlank()) {
+                        builder.queryParam("primary_release_year", year);
+                    }
+
+                    return builder.build();
+                })
+                .retrieve()
+                .body(TmdbMovieListResponse.class);
+    }
 }

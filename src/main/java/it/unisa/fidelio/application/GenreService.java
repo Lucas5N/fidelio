@@ -34,6 +34,24 @@ public class GenreService {
         return map;
     }
 
+    // --- METODO AGGIUNTO PER RECUPERARE ID DA NOME ---
+    public Integer getGenreIdByName(String genreName) {
+        if (genreName == null || genreName.isBlank()) {
+            return null;
+        }
+
+        // Recuperiamo la mappa (usando la cache se valida)
+        Map<Integer, String> genres = getGenreMap();
+
+        // Cerchiamo l'ID corrispondente al nome (case-insensitive)
+        for (Map.Entry<Integer, String> entry : genres.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(genreName)) {
+                return entry.getKey();
+            }
+        }
+
+        return null; // Nessun match trovato
+    }
+
     private record Cache(Map<Integer, String> map, Instant expiresAt) {}
 }
-
