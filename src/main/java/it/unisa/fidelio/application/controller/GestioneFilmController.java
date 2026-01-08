@@ -20,8 +20,8 @@ import java.util.Collections;
 import java.util.List;
 
 @Controller
-// Mapping di classe esteso per includere /filmlist e risolvere il 404 sulla lista.
-@RequestMapping({"/film", "/search", "/filmlist"})
+// Il controller gestisce ORA SOLO la base /film e le sue API
+@RequestMapping("/film")
 public class GestioneFilmController {
 
     private final FilmService filmService;
@@ -34,70 +34,6 @@ public class GestioneFilmController {
         this.recensioneService = recensioneService;
         this.utenteService = utenteService;
         this.tmdbClient = tmdbClient;
-    }
-
-    // ==========================================
-    // NUOVO MAPPING: LISTA FILM POPOLARI (Mappato su /filmlist)
-    // ==========================================
-    /**
-     * Cattura il percorso base "/filmlist" (ereditato dal RequestMapping di classe).
-     */
-    @GetMapping
-    public String filmListPage(Model model) {
-        // Questa @GetMapping senza path specifico ora cattura /filmlist
-        List<FilmCardDto> films = filmService.getFilmPopolari(1);
-
-        model.addAttribute("filmsList", films);
-
-        // RESTITUISCE LA VISTA CORRETTA: templates/film/filmlist.html
-        return "film/filmlist";
-    }
-
-    // ==========================================
-    // 0. RICERCA DA NAVBAR/RICERCA FILTRATA (Mappato su /search)
-    // ==========================================
-    /**
-     * Mappato esplicitamente su /search per non entrare in conflitto con /filmlist.
-     */
-    @GetMapping("/search")
-    public String search(@RequestParam(value = "q", required = false) String query,
-                         @RequestParam(value = "genere", required = false) String genere,
-                         @RequestParam(value = "anno", required = false) String anno,
-                         Model model) {
-
-        String cleanedQuery = (query != null) ? query.trim() : "";
-        String cleanedGenere = (genere != null && !genere.isEmpty()) ? genere : null;
-        String cleanedAnno = (anno != null && !anno.isEmpty()) ? anno : null;
-
-        List<?> results = Collections.emptyList();
-
-        // 1. CASO: RICERCA FILTRATA ATTIVA (Con o Senza query di testo)
-        if (cleanedGenere != null || cleanedAnno != null) {
-            try {
-                results = filmService.ricercaFiltrata(
-                        cleanedQuery,
-                        cleanedGenere != null ? cleanedGenere : "",
-                        cleanedAnno != null ? cleanedAnno : ""
-                );
-            } catch (Exception e) {
-                System.err.println("Errore durante la ricerca filtrata: " + e.getMessage());
-            }
-        }
-        // 2. CASO: SOLO RICERCA TESTUALE (Nessun filtro attivo)
-        else if (!cleanedQuery.isEmpty()) {
-            try {
-                results = filmService.ricercaFilm(cleanedQuery, 1);
-            } catch (Exception e) {
-                System.err.println("Errore durante la ricerca TMDB: " + e.getMessage());
-            }
-        }
-
-        model.addAttribute("query", cleanedQuery);
-        model.addAttribute("genere", cleanedGenere);
-        model.addAttribute("anno", cleanedAnno);
-        model.addAttribute("results", results);
-
-        return "search";
     }
 
     // ==========================================
@@ -181,8 +117,7 @@ public class GestioneFilmController {
     // ==========================================
 
     /**
-     * CORREZIONE APPLICATA: Si mappa su /{filmId}, che combinato con il prefisso di classe "/film"
-     * risolve correttamente l'URL /film/{filmId}.
+     * Mappato su /{filmId}, che combinato con il prefisso di classe "/film" risolve /film/{filmId}.
      */
     @GetMapping("/{filmId}")
     public String visualizzaDettagli(@PathVariable Long filmId,
