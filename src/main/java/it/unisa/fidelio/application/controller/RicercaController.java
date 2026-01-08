@@ -22,7 +22,7 @@ public class RicercaController {
     }
 
     /**
-     * Cattura il percorso base "/search" grazie all'annotation di classe.
+     * Cattura il percorso base "/search".
      */
     @GetMapping
     public String search(@RequestParam(value = "q", required = false) String query,
@@ -36,19 +36,25 @@ public class RicercaController {
 
         List<?> results = Collections.emptyList();
 
-        // 1. CASO: RICERCA FILTRATA ATTIVA
+        // 1. CASO: RICERCA FILTRATA ATTIVA (Con o Senza query di testo)
         if (cleanedGenere != null || cleanedAnno != null) {
-            // ... (Logica omessa per brevità, usa la tua)
-            results = filmService.ricercaFiltrata(
-                    cleanedQuery,
-                    cleanedGenere != null ? cleanedGenere : "",
-                    cleanedAnno != null ? cleanedAnno : ""
-            );
+            try {
+                results = filmService.ricercaFiltrata(
+                        cleanedQuery,
+                        cleanedGenere != null ? cleanedGenere : "",
+                        cleanedAnno != null ? cleanedAnno : ""
+                );
+            } catch (Exception e) {
+                System.err.println("Errore durante la ricerca filtrata: " + e.getMessage());
+            }
         }
-        // 2. CASO: SOLO RICERCA TESTUALE
+        // 2. CASO: SOLO RICERCA TESTUALE (Nessun filtro attivo)
         else if (!cleanedQuery.isEmpty()) {
-            // ... (Logica omessa per brevità, usa la tua)
-            results = filmService.ricercaFilm(cleanedQuery, 1);
+            try { // <--- CORREZIONE: Aggiunto try-catch per API Error
+                results = filmService.ricercaFilm(cleanedQuery, 1);
+            } catch (Exception e) {
+                System.err.println("Errore durante la ricerca TMDB: " + e.getMessage());
+            }
         }
 
         model.addAttribute("query", cleanedQuery);
