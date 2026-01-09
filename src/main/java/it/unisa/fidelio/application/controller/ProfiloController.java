@@ -1,11 +1,12 @@
 package it.unisa.fidelio.application.controller;
 
+import it.unisa.fidelio.application.AdminService; // Importa il servizio admin
 import it.unisa.fidelio.application.UtenteService;
 import it.unisa.fidelio.storage.Utente;
 import it.unisa.fidelio.storage.UtenteRepository;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder; // IMPORTANTE
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,12 +21,17 @@ public class ProfiloController {
 
     private final UtenteService utenteService;
     private final UtenteRepository utenteRepository;
-    private final PasswordEncoder passwordEncoder; // Aggiunto per gestire il cambio password
+    private final PasswordEncoder passwordEncoder;
+    private final AdminService adminService; // Aggiunto
 
-    public ProfiloController(UtenteService utenteService, UtenteRepository utenteRepository, PasswordEncoder passwordEncoder) {
+    public ProfiloController(UtenteService utenteService,
+                             UtenteRepository utenteRepository,
+                             PasswordEncoder passwordEncoder,
+                             AdminService adminService) { // Aggiunto nel costruttore
         this.utenteService = utenteService;
         this.utenteRepository = utenteRepository;
         this.passwordEncoder = passwordEncoder;
+        this.adminService = adminService;
     }
 
     @GetMapping("/profilo")
@@ -40,6 +46,14 @@ public class ProfiloController {
         model.addAttribute("recensioni", utente.getRecensioni());
         // model.addAttribute("listePrivate", utente.getListePrivate());
 
+        // === LOGICA AMMINISTRATORE ===
+        if (Boolean.TRUE.equals(utente.getAmministratore())) {
+            // Carica tutti gli utenti tranne se stesso (opzionale, ma consigliato)
+            model.addAttribute("listaUtenti", utenteRepository.findAll());
+            // Carica le segnalazioni aperte
+            model.addAttribute("listaSegnalazioni", adminService.getSegnalazioniAperte());
+        }
+
         return "profiloUtente";
     }
 
@@ -52,7 +66,6 @@ public class ProfiloController {
                                   @RequestParam("viaENumCivico") String viaENumCivico,
                                   @RequestParam(value = "nuovaPassword", required = false) String nuovaPassword,
                                   @RequestParam("bio") String bio,
-                                  // Campi specifici (opzionali in base al ruolo)
                                   @RequestParam(value = "testata", required = false) String testata,
                                   @RequestParam(value = "casa", required = false) String casa,
                                   @RequestParam(value = "credit", required = false) String credit,
@@ -60,23 +73,17 @@ public class ProfiloController {
 
         Utente utente = utenteService.findByEmail(userDetails.getUsername());
 
-        // 1. Aggiornamento dati base
         utente.setNome(nome);
         utente.setCognome(cognome);
         utente.setBio(bio);
         utente.setViaENumCivico(viaENumCivico);
-
-        // Nota: Cambiare email/username potrebbe richiedere un nuovo login in base alla config di Security
-        // Qui lo permettiamo direttamente:
         utente.setUsername(username);
         utente.setEmail(email);
 
-        // 2. Gestione Password (solo se l'utente ha scritto qualcosa)
         if (nuovaPassword != null && !nuovaPassword.isBlank()) {
             utente.setPassword(passwordEncoder.encode(nuovaPassword));
         }
 
-        // 3. Gestione Ruoli Specifici
         if ("Critico".equals(utente.getDtype())) {
             utente.setTestataGiornalistica(testata);
         } else if ("Fedele".equals(utente.getDtype())) {
@@ -84,7 +91,6 @@ public class ProfiloController {
             utente.setCreditReference(credit);
         }
 
-        // 4. Immagine
         if (immagine != null && !immagine.isEmpty()) {
             try {
                 utente.setImmagineProfilo(immagine.getBytes());
@@ -94,9 +100,6 @@ public class ProfiloController {
         }
 
         utenteRepository.save(utente);
-
-        // Se l'email (che è l'ID di login) è cambiata, Spring Security potrebbe disconnettere l'utente.
-        // Per semplicità facciamo redirect al profilo, se slogga l'utente dovrà rifare login.
         return "redirect:/profilo";
     }
 }

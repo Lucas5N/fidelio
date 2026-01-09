@@ -5,8 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilo Utente - Fidelio</title>
 
-    <link rel="stylesheet" th:href="@{/css/components.css}"> <link rel="stylesheet" th:href="@{/css/profile.css}">    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+    <link rel="stylesheet" th:href="@{/css/profile.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+        .admin-section {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-family: 'Inter', sans-serif; /* Assicura che tutto usi Inter */
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .admin-table th {
+            text-align: left;
+            padding: 15px;
+            background: rgba(240, 106, 42, 0.15);
+            color: #f06a2a;
+            /* Modificato: ora usa Inter come il resto del profilo */
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase; /* Per mantenere leggibilità ed eleganza */
+            letter-spacing: 0.5px;
+        }
+        .admin-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            font-family: 'Inter', sans-serif;
+        }
+        .admin-table tr:last-child td { border-bottom: none; }
+
+        .btn-delete {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+        }
+        .btn-delete:hover { background: #e60000; }
+
+        .badge-role {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.1);
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
 </head>
 <body class="profile-page">
 
@@ -26,7 +87,11 @@
         <h1 class="profile-name" th:text="${utenteCorrente.nome + ' ' + utenteCorrente.cognome}">Nome Cognome</h1>
         <p class="profile-username" th:text="'@' + ${utenteCorrente.username}">@username</p>
 
-        <div class="profile-badge" th:text="${utenteCorrente.dtype}">CINEFILO</div>
+        <div class="profile-badge"
+             th:text="${utenteCorrente.amministratore} ? 'AMMINISTRATORE' : ${utenteCorrente.dtype}"
+             th:style="${utenteCorrente.amministratore} ? 'border-color: #ffd700; color: #ffd700;' : ''">
+            CINEFILO
+        </div>
 
         <p class="profile-bio" th:text="${utenteCorrente.bio != null && !utenteCorrente.bio.isEmpty()} ? ${utenteCorrente.bio} : 'Nessuna biografia inserita...'">
             Lorem ipsum dolor sit amet...
@@ -43,7 +108,6 @@
 
         <section>
             <h2 class="section-title">Le tue Recensioni</h2>
-
             <div class="reviews-grid" th:if="${recensioni != null and !recensioni.isEmpty()}">
                 <div class="review-card" th:each="recensione : ${recensioni}">
                     <div class="review-header">
@@ -53,10 +117,9 @@
                         </div>
                     </div>
                     <p style="font-weight:bold; margin-bottom:5px;">Film ID: <span th:text="${recensione.filmTmdbId}">123</span></p>
-                    <p class="review-text" th:text="${recensione.testo}">Testo della recensione...</p>
+                    <p class="review-text" th:text="${recensione.testo}">Testo...</p>
                 </div>
             </div>
-
             <div class="placeholder-box" th:if="${recensioni == null or recensioni.isEmpty()}">
                 <div class="placeholder-icon">📝</div>
                 <p>Non hai ancora scritto nessuna recensione.</p>
@@ -65,14 +128,12 @@
 
         <section>
             <h2 class="section-title">Liste Private</h2>
-
             <div class="lists-grid" th:if="${listePrivate != null and !listePrivate.isEmpty()}">
                 <div class="review-card" th:each="lista : ${listePrivate}">
                     <h3 th:text="${lista.nome}">Nome Lista</h3>
                     <p th:text="${lista.descrizione}" style="font-size:0.9rem; color:#aaa;"></p>
                 </div>
             </div>
-
             <div class="placeholder-box" th:if="${listePrivate == null or listePrivate.isEmpty()}">
                 <div class="placeholder-icon">🔒</div>
                 <p>Nessuna lista privata creata (Coming Soon).</p>
@@ -83,7 +144,84 @@
             <h2 class="section-title">Raccomandati per Te</h2>
             <div class="placeholder-box">
                 <div class="placeholder-icon">🤖</div>
-                <p>L'algoritmo sta elaborando i tuoi gusti... torna presto per i consigli personalizzati!</p>
+                <p>L'algoritmo sta elaborando i tuoi gusti...</p>
+            </div>
+        </section>
+
+        <section class="admin-section" th:if="${utenteCorrente.amministratore}">
+            <h2 class="section-title" style="color: #ffd700; border-color: rgba(255, 215, 0, 0.3);">
+                Dashboard Amministratore
+            </h2>
+
+            <h3 style="margin-bottom:15px; font-family:'Inter', sans-serif; font-weight:600;">Tutti gli Utenti</h3>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Ruolo</th>
+                        <th>Azioni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="u : ${listaUtenti}" th:if="${u.id != utenteCorrente.id}">
+                        <td th:text="${u.id}">1</td>
+                        <td th:text="${u.username}">user</td>
+                        <td th:text="${u.email}">email@test.com</td>
+                        <td>
+                            <span class="badge-role" th:text="${u.dtype}">CINEFILO</span>
+                            <span th:if="${u.amministratore}" style="color:#ffd700; font-weight:bold;"> (ADMIN)</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/admin/eliminaUtente}" method="post"
+                                  onsubmit="return confirm('Sei sicuro di voler eliminare questo utente?');">
+                                <input type="hidden" name="utenteId" th:value="${u.id}">
+                                <button type="submit" class="btn-delete">Elimina</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${listaUtenti == null or listaUtenti.size() <= 1}">
+                        <td colspan="5" style="text-align:center; color:#888;">Nessun altro utente trovato.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 style="margin-bottom:15px; font-family:'Inter', sans-serif; font-weight:600;">Recensioni Segnalate</h3>
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th>ID Segn.</th>
+                        <th>Autore Rec.</th>
+                        <th>Motivo Segnalazione</th>
+                        <th>Testo Recensione</th>
+                        <th>Azioni</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="s : ${listaSegnalazioni}">
+                        <td th:text="${s.id}">1</td>
+                        <td th:text="${s.recensione.autore.username}">autore</td>
+                        <td th:text="${s.motivo}" style="color: #ff6b6b;">Offensivo</td>
+                        <td>
+                            <span th:text="${#strings.abbreviate(s.recensione.testo, 50)}">Testo...</span>
+                        </td>
+                        <td>
+                            <form th:action="@{/admin/eliminaRecensione}" method="post"
+                                  onsubmit="return confirm('Vuoi davvero eliminare questa recensione?');">
+                                <input type="hidden" name="recensioneId" th:value="${s.recensione.id}">
+                                <button type="submit" class="btn-delete">Elimina Recensione</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${listaSegnalazioni == null or listaSegnalazioni.isEmpty()}">
+                        <td colspan="5" style="text-align:center; color:#888;">Nessuna segnalazione aperta.</td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -96,7 +234,6 @@
         <h2 style="margin-bottom: 20px;">Modifica Profilo</h2>
 
         <form class="modal-form" th:action="@{/profilo/aggiorna}" method="POST" enctype="multipart/form-data">
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
                     <label for="editNome">Nome</label>
@@ -107,7 +244,6 @@
                     <input type="text" id="editCognome" name="cognome" th:value="${utenteCorrente.cognome}" required>
                 </div>
             </div>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div>
                     <label for="editUsername">Username</label>
@@ -118,7 +254,6 @@
                     <input type="email" id="editEmail" name="email" th:value="${utenteCorrente.email}" required>
                 </div>
             </div>
-
             <label for="editIndirizzo">Via e Numero Civico</label>
             <input type="text" id="editIndirizzo" name="viaENumCivico" th:value="${utenteCorrente.viaENumCivico}">
 
@@ -160,21 +295,9 @@
 
 <script>
     const modal = document.getElementById('editModal');
-
-    function openModal() {
-        modal.classList.add('active');
-    }
-
-    function closeModal() {
-        modal.classList.remove('active');
-    }
-
-    // Chiudi se clicchi fuori dal box
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            closeModal();
-        }
-    }
+    function openModal() { modal.classList.add('active'); }
+    function closeModal() { modal.classList.remove('active'); }
+    window.onclick = function(event) { if (event.target == modal) closeModal(); }
 </script>
 
 </body>
