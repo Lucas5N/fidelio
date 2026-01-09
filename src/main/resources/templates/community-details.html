@@ -2,207 +2,82 @@
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Dettaglio Community - Fidelio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Community - Fidelio</title>
+
+    <!-- 1. Ordine CSS Importante: Base -> Components -> Specifico -->
     <link rel="stylesheet" th:href="@{/css/home.css}" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/components.css}" />
+    <link rel="stylesheet" th:href="@{/css/community.css}" />
 
-    <style>
-        .comm-header {
-            background: #111; border-bottom: 1px solid #333;
-            padding: 100px 0 40px; margin-bottom: 40px;
-        }
-        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
-
-        .comm-info h1 { font-size: 36px; color: white; margin: 0 0 10px; }
-        .comm-info p { color: #aaa; font-size: 16px; max-width: 700px; margin-bottom: 20px; }
-        .comm-stats { display: flex; gap: 20px; font-size: 14px; color: #777; margin-bottom: 25px; }
-        .comm-stats span { color: white; font-weight: 600; }
-
-        .btn-join {
-            padding: 10px 24px; border-radius: 6px; border: 1px solid var(--accent);
-            background: transparent; color: var(--accent); font-weight: 600; cursor: pointer; transition: 0.2s;
-        }
-        .btn-join:hover { background: var(--accent); color: white; }
-        .btn-join.joined { background: #333; border-color: #333; color: white; }
-        .btn-join.joined:hover { background: #cc3333; border-color: #cc3333; content: "Leave"; }
-
-        /* THREAD LIST */
-        .thread-list { display: flex; flex-direction: column; gap: 15px; }
-
-        .thread-card {
-            background: var(--panel); border: 1px solid #333; border-radius: 8px;
-            padding: 20px; display: flex; justify-content: space-between; align-items: center;
-            text-decoration: none; transition: 0.2s;
-        }
-        .thread-card:hover { border-color: #666; background: #222; }
-
-        .t-main h3 { margin: 0 0 6px; color: white; font-size: 18px; }
-        .t-meta { font-size: 13px; color: #666; }
-        .t-meta strong { color: #999; }
-
-        .t-stats { text-align: right; min-width: 80px; }
-        .badge-replies { background: #333; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-
-        /* CREA THREAD BOX */
-        .new-thread-box {
-            background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 30px;
-            border: 1px solid #333; display: none; /* Nascosto se non iscritto */
-        }
-        .new-thread-box.visible { display: block; }
-        .nt-input { width: 100%; background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
-        .nt-textarea { width: 100%; background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; resize: vertical; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <!-- 2. NAVBAR NEL FLUSSO NATURALE -->
+    <div class="topnav">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+    </div>
 
-    <!-- HEADER COMMUNITY -->
-    <header class="comm-header">
-        <div class="container">
-            <div class="comm-info">
-                <h1 id="cName">Caricamento...</h1>
-                <p id="cDesc">...</p>
-                <div class="comm-stats">
-                    <div id="cMembers"><span>0</span> Membri</div>
-                    <div id="cDate">Creato il: <span>-</span></div>
+    <!-- 3. CONTENUTO -->
+    <div class="page-wrapper">
+        <div class="comm-container">
+
+            <!-- SIDEBAR SINISTRA -->
+            <aside class="sidebar-left">
+                <div class="comm-card-info">
+                    <span class="comm-icon-large">🎬</span>
+                    <h1 class="comm-title" id="cName">Caricamento...</h1>
+                    <div class="comm-stats" id="cMembers">0 Membri</div>
+
+                    <button id="joinBtn" class="btn primary full-width" onclick="toggleJoin()">Unisciti</button>
+
+                    <div class="comm-desc">
+                        <p id="cDesc">...</p>
+                    </div>
                 </div>
-                <button id="joinBtn" class="btn-join" onclick="toggleJoin()">Unisciti</button>
-            </div>
+            </aside>
+
+            <!-- FEED CENTRALE -->
+            <main class="main-feed">
+                <!-- Input Box -->
+                <div class="create-post-box" id="inputArea">
+                    <input type="text" id="tTitle" class="cp-input" placeholder="Titolo discussione...">
+                    <textarea id="tContent" class="cp-input" rows="3" placeholder="Scrivi qualcosa..."></textarea>
+                    <div class="cp-actions">
+                        <button class="btn primary" onclick="postThread()">Pubblica</button>
+                    </div>
+                </div>
+
+                <div class="feed-tabs">
+                    <div class="tab active">Discussioni</div>
+                    <div class="tab">Popolari</div>
+                </div>
+
+                <div id="threadList">
+                    <!-- JS population -->
+                </div>
+            </main>
+
+            <!-- SIDEBAR DESTRA -->
+            <aside class="sidebar-right">
+                <div class="members-card">
+                    <div class="section-head-small">Membri Online</div>
+                    <div class="member-row">
+                        <div class="status-dot"></div>
+                        <div class="avatar avatar--accent" style="width:24px; height:24px; font-size:10px;">P</div>
+                        <span>Paolo</span>
+                    </div>
+                </div>
+            </aside>
+
         </div>
-    </header>
+    </div>
 
-    <main class="container" style="padding-bottom: 80px;">
-
-        <!-- FORM CREAZIONE THREAD (Visibile solo se iscritti) -->
-        <div id="newThreadBox" class="new-thread-box">
-            <h3 style="color: white; margin-bottom: 15px;">Apri una discussione</h3>
-            <input type="text" id="tTitle" class="nt-input" placeholder="Titolo della discussione">
-            <textarea id="tContent" class="nt-textarea" rows="3" placeholder="Scrivi qualcosa..."></textarea>
-            <button onclick="postThread()" style="background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">Pubblica</button>
-        </div>
-
-        <h2 style="color: white; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">Discussioni</h2>
-
-        <div id="threadList" class="thread-list">
-            <!-- I thread verranno inseriti qui -->
-            <div style="color: #666; text-align: center; padding: 40px;">Nessuna discussione trovata.</div>
-        </div>
-    </main>
-
-    <script>
-        // Estrai l'ID dalla URL (es. community-detail?id=5)
-        const params = new URLSearchParams(window.location.search);
-        const commId = params.get('id');
-        const user = JSON.parse(localStorage.getItem("user")); // Simulazione auth
-        let isMember = false;
-
-        async function init() {
-            if(!commId) return;
-
-            // 1. Dettagli Community
-            const resC = await fetch(`/api/community/${commId}`);
-            const comm = await resC.json();
-
-            document.getElementById('cName').innerText = comm.nome;
-            document.getElementById('cDesc').innerText = comm.descrizione;
-            document.getElementById('cMembers').innerHTML = `<span>${comm.numMembri}</span> Membri`;
-            document.getElementById('cDate').innerHTML = `Creato il: <span>${new Date(comm.dataCreazione).toLocaleDateString()}</span>`;
-
-            // Qui dovremmo controllare se l'utente è iscritto.
-            // In un'app reale l'API ci direbbe "isJoined: true".
-            // Per ora simuliamo controllando nel localStorage o assumendo false.
-            // checkMembership(comm);
-
-            // 2. Lista Thread
-            loadThreads();
-        }
-
-        async function loadThreads() {
-            const resT = await fetch(`/api/community/${commId}/threads`);
-            if(resT.ok) {
-                const threads = await resT.json();
-                const list = document.getElementById('threadList');
-                list.innerHTML = '';
-
-                if(threads.length === 0) {
-                    list.innerHTML = '<div style="color: #666; text-align: center; padding: 40px;">Nessuna discussione. Sii il primo!</div>';
-                    return;
-                }
-
-                threads.forEach(t => {
-                    const card = document.createElement('a');
-                    card.href = '#'; // Link al dettaglio thread
-                    card.className = 'thread-card';
-                    card.innerHTML = `
-                        <div class="t-main">
-                            <h3>${t.titolo}</h3>
-                            <div class="t-meta">Avviato da <strong>${t.autoreUsername}</strong> • ${new Date(t.dataCreazione).toLocaleDateString()}</div>
-                        </div>
-                        <div class="t-stats">
-                            <span class="badge-replies">💬 ${t.numRisposte}</span>
-                        </div>
-                    `;
-                    list.appendChild(card);
-                });
-            }
-        }
-
-        // --- GESTIONE ISCRIZIONE ---
-        const joinBtn = document.getElementById('joinBtn');
-        const threadBox = document.getElementById('newThreadBox');
-
-        function updateUI(joined) {
-            isMember = joined;
-            if(joined) {
-                joinBtn.innerText = "Iscritto";
-                joinBtn.classList.add('joined');
-                threadBox.classList.add('visible');
-            } else {
-                joinBtn.innerText = "Unisciti";
-                joinBtn.classList.remove('joined');
-                threadBox.classList.remove('visible');
-            }
-        }
-
-        async function toggleJoin() {
-            if(!user) { alert("Effettua il login!"); return; }
-
-            const method = isMember ? 'DELETE' : 'POST';
-            const res = await fetch(`/api/community/${commId}/iscrizione?utenteId=${user.id}`, { method: method });
-
-            if(res.ok) {
-                updateUI(!isMember);
-                // Ricarica info per aggiornare contatore membri
-                const resC = await fetch(`/api/community/${commId}`);
-                const comm = await resC.json();
-                document.getElementById('cMembers').innerHTML = `<span>${comm.numMembri}</span> Membri`;
-            }
-        }
-
-        // --- CREAZIONE THREAD ---
-        async function postThread() {
-            const title = document.getElementById('tTitle').value;
-            const content = document.getElementById('tContent').value;
-
-            if(!title || !content) return alert("Compila i campi");
-
-            const res = await fetch(`/api/community/${commId}/threads?autoreId=${user.id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ titolo: title, contenuto: content })
-            });
-
-            if(res.ok) {
-                document.getElementById('tTitle').value = '';
-                document.getElementById('tContent').value = '';
-                loadThreads();
-            } else {
-                alert("Errore. Sei iscritto?");
-            }
-        }
-
-        init();
-    </script>
+    <!-- 4. FOOTER -->
+    <footer>
+        <div th:replace="~{fragments/footer :: footer}"></div>
+    </footer>
+    <script th:src="@{/js/community-details.js}"></script>
 </body>
 </html>

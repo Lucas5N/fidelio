@@ -9,7 +9,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/community")
@@ -53,20 +58,33 @@ public class GestioneCommunityController {
     /**
      * POST /api/community
      * Crea una nuova community.
-     * Richiede i dati nel body e l'ID del creatore come parametro query.
-     * Esempio: POST /api/community?creatoreId=1
+     * Richiede autenticazione.
      */
     @PostMapping
-    public ResponseEntity<CommunityDTO> createCommunity(
+    public ResponseEntity<?> createCommunity(
             @RequestBody CommunityDTO communityDTO,
-            @RequestParam Integer creatoreId) {
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        // TODO: In produzione, estrarre creatoreId dal Principal/SecurityContext
+        // 1. Controllo base autenticazione
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Collections.singletonMap("error", "Devi essere autenticato."));
+        }
+
         try {
-            CommunityDTO created = communityService.creaCommunity(communityDTO, creatoreId);
+            // 2. Chiamata al Service passando lo USERNAME
+            CommunityDTO created = communityService.creaCommunity(communityDTO, userDetails.getUsername());
+
             return new ResponseEntity<>(created, HttpStatus.CREATED);
+
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
+
+        } catch (SecurityException e) {
+            // 3. Gestione ruolo non autorizzato (non è Fedele)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
         }
     }
 
@@ -101,41 +119,92 @@ public class GestioneCommunityController {
         }
     }
 
-    // --- ENDPOINTS ISCRIZIONE ---
+    /**
+ * GET /api/community/{id}/iscrizione
+ * Controlla se l'utente loggato è iscritto.
+ * Restituisce JSON: { "iscritto": true/false }
+ */
+    @GetMapping("/{id}/iscrizione")
+    public ResponseEntity<Map<String, Boolean>> checkIscrizione(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // Se non è loggato, sicuramente non è iscritto
+        if (userDetails == null) {
+            return ResponseEntity.ok(Collections.singletonMap("iscritto", false));
+        }
+
+        try {
+            boolean isIscritto = communityService.isUtenteIscritto(id, userDetails.getUsername());
+            return ResponseEntity.ok(Collections.singletonMap("iscritto", isIscritto));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     /**
      * POST /api/community/{id}/iscrizione
      * Iscrive un utente alla community.
-     * Esempio: POST /api/community/5/iscrizione?utenteId=10
      */
     @PostMapping("/{id}/iscrizione")
-    public ResponseEntity<String> joinCommunity(
+    public ResponseEntity<?> joinCommunity(
             @PathVariable Integer id,
-            @RequestParam Integer utenteId) {
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // 1. Controllo di sicurezza: l'utente è loggato?
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Collections.singletonMap("error", "Devi essere autenticato per iscriverti."));
+        }
 
         try {
-            communityService.iscriviUtente(id, utenteId);
-            return ResponseEntity.ok("Iscrizione avvenuta con successo");
+            // 2. Chiamiamo il service passando lo USERNAME (dal token), non l'ID
+            communityService.iscriviUtente(id, userDetails.getUsername());
+
+            // 3. Ritorniamo un JSON pulito
+            return ResponseEntity.ok(java.util.Collections.singletonMap("message", "Iscrizione avvenuta con successo"));
+
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            // Community o Utente non trovati nel DB
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
+
+        } catch (IllegalStateException e) {
+            // Utente già iscritto (Evitiamo duplicati) -> 409 Conflict
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
         }
     }
 
     /**
      * DELETE /api/community/{id}/iscrizione
-     * Rimuove l'iscrizione di un utente.
-     * Esempio: DELETE /api/community/5/iscrizione?utenteId=10
+     * Rimuove l'iscrizione dell'utente loggato.
      */
     @DeleteMapping("/{id}/iscrizione")
-    public ResponseEntity<String> leaveCommunity(
+    public ResponseEntity<?> leaveCommunity(
             @PathVariable Integer id,
-            @RequestParam Integer utenteId) {
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        // 1. Sicurezza: Utente loggato?
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(java.util.Collections.singletonMap("error", "Devi essere autenticato."));
+        }
 
         try {
-            communityService.disiscriviUtente(id, utenteId);
-            return ResponseEntity.ok("Disiscrizione avvenuta con successo"); // O 204 No Content
+            // 2. Chiamata al service con Username sicuro
+            communityService.disiscriviUtente(id, userDetails.getUsername());
+
+            // 3. Risposta JSON
+            return ResponseEntity.ok(java.util.Collections.singletonMap("message", "Disiscrizione avvenuta con successo"));
+
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            // Caso in cui provo a disiscrivermi ma non ero iscritto (opzionale)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(java.util.Collections.singletonMap("error", e.getMessage()));
         }
     }
 
@@ -158,19 +227,24 @@ public class GestioneCommunityController {
 
     /**
      * POST /api/community/{communityId}/threads
-     * Crea un thread IN quella community
+     * Crea un thread IN quella community.
+     * L'autore viene recuperato dalla sessione di Spring Security.
      */
     @PostMapping("/{communityId}/threads")
     public ResponseEntity<?> createThread(
             @PathVariable Integer communityId,
             @RequestBody ThreadDTO threadDTO,
-            @RequestParam Integer autoreId) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            ThreadDTO created = communityService.creaThread(communityId, threadDTO, autoreId);
+            if (userDetails == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Devi essere autenticato.");
+            }
+            
+            ThreadDTO created = communityService.creaThread(communityId, threadDTO, userDetails.getUsername());
             return new ResponseEntity<>(created, HttpStatus.CREATED);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
+        } catch (SecurityException | IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
