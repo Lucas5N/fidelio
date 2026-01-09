@@ -42,19 +42,14 @@ public class ListaPrivataService {
         ListaPrivata lista = repository.findById(listaId)
                 .orElseThrow();
 
-        System.out.println("EMAIL DB: " + lista.getProprietario().getEmail());
-        System.out.println("EMAIL INPUT: " + email);
-
 //        // sicurezza: solo il proprietario può aggiungere
 //        if (!lista.getProprietario().getEmail().equals(email)) {
 //            throw new AccessDeniedException("Non autorizzato");
 //        }
-//
-//        if (lista.getFilmTmdb().containsKey(tmdbId)) {
-//            throw new IllegalStateException("Film già presente nella lista");
-//        }
 
-        System.out.println("MAP SIZE: " + lista.getFilmTmdb().size());
+        if (lista.getFilmTmdb().containsKey(tmdbId)) {
+            throw new IllegalStateException("Film già presente nella lista");
+           }
 
         lista.getFilmTmdb().put(tmdbId, LocalDate.now());
     }

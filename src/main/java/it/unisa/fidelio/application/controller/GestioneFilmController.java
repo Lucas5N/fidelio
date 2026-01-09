@@ -1,9 +1,6 @@
 package it.unisa.fidelio.application.controller;
 
-import it.unisa.fidelio.application.FilmService;
-import it.unisa.fidelio.application.RecensioneService;
-import it.unisa.fidelio.application.TmdbClient;
-import it.unisa.fidelio.application.UtenteService;
+import it.unisa.fidelio.application.*;
 import it.unisa.fidelio.presentation.FilmCardDto;
 import it.unisa.fidelio.presentation.MovieDetailsView;
 import it.unisa.fidelio.storage.Utente;
@@ -14,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.Collections;
@@ -27,12 +25,15 @@ public class GestioneFilmController {
     private final RecensioneService recensioneService;
     private final UtenteService utenteService;
     private final TmdbClient tmdbClient;
+    private final ListaPrivataService listaService;
 
-    public GestioneFilmController(FilmService filmService, RecensioneService recensioneService, UtenteService utenteService, TmdbClient tmdbClient) {
+
+    public GestioneFilmController(FilmService filmService, RecensioneService recensioneService, UtenteService utenteService, TmdbClient tmdbClient, ListaPrivataService listaService) {
         this.filmService = filmService;
         this.recensioneService = recensioneService;
         this.utenteService = utenteService;
         this.tmdbClient = tmdbClient;
+        this.listaService = listaService;
     }
 
     // API Ricerca Film
@@ -124,6 +125,22 @@ public class GestioneFilmController {
 
             model.addAttribute("utenteLoggato", utente);
             model.addAttribute("isAdmin", utente.getAmministratore());
+
+            // ✅ LISTE UTENTE
+            model.addAttribute(
+                    "userLists",
+                    listaService.getListeUtente(utente.getEmail())
+            );
+
+            // ✅ FILM GIÀ PRESENTE NELLE LISTE
+            model.addAttribute(
+                    "filmInListe",
+                    listaService.getFilmInListeMap(
+                            utente.getEmail(),
+                            movie.getId()   // ⚠️ TMDB ID, non filmId
+                    )
+            );
+
             model.addAttribute("likeGiaFatti", recensioneService.getLikeGiaFatti(utente.getId()));
             model.addAttribute("dislikeGiaFatti", recensioneService.getDislikeGiaFatti(utente.getId()));
             model.addAttribute("segnalazioniGiaFatte", recensioneService.getSegnalazioniGiaFatte(utente.getId()));
@@ -140,4 +157,22 @@ public class GestioneFilmController {
 
         return "film/details";
     }
+
+    @PostMapping("/lists/{listId}/add")
+    public String addMovieToList(
+            @PathVariable Integer listId,
+            @RequestParam Long tmdbId,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        listaService.aggiungiFilm(listId, tmdbId, principal.getName());
+
+        redirectAttributes.addFlashAttribute(
+                "listSuccessMessage",
+                "Film aggiunto correttamente alla lista!"
+        );
+
+        return "redirect:/film/" + tmdbId;
+    }
+
 }
