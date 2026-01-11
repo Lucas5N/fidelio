@@ -143,7 +143,6 @@ public class TmdbClient {
                 .body(TmdbReviewResponseDTO.class);
     }
 
-    // --- METODO AGGIUNTO PER LA RICERCA FILTRATA ---
     public TmdbMovieListResponse discoverMovies(Integer genreId, String year, int page) {
         return restClient.get()
                 .uri(uriBuilder -> {

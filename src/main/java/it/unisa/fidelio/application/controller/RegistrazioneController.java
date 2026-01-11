@@ -27,21 +27,12 @@ public class RegistrazioneController {
     private final UtenteService utenteService;
     private final AuthenticationManager authenticationManager;
 
-    // === REGEX COSTANTI (Aggiornate) ===
     private static final String REGEX_EMAIL = "^[A-z0-9._%+-]+@[A-z0-9.-]+\\.[A-z]{2,10}$";
-    // Lunghezza minima 8 caratteri
     private static final String REGEX_PASSWORD_LEN = "^.{8,}$";
-    // Lettere, spazi, apostrofi, trattini (2-30 caratteri)
     private static final String REGEX_NOME_COGNOME = "^[A-zÀ-ù ‘-]{2,30}$";
-    // Esattamente 10 cifre
     private static final String REGEX_TELEFONO = "^\\d{10}$";
-    // Alfanumerico + spazi (2-30 caratteri)
     private static final String REGEX_INDIRIZZO = "^[0-9A-zÀ-ù ‘-]{2,30}$";
-    // Formato testata giornalistica (più caratteri ammessi)
     private static final String REGEX_TESTATA = "^[\\p{L}0-9 .'&!?-]{2,100}$";
-
-    // Formato generico per Casa prod. e Credit (solo lettere, max 30)
-    // QUESTA E' LA REGEX RICHIESTA PER CASA PROD. E CREDIT REFERENCE
     private static final String REGEX_GENERICA_FEDELE = "^[A-zÀ-ù ‘-]{2,30}$";
 
     public RegistrazioneController(UtenteService utenteService, AuthenticationManager authenticationManager) {
@@ -52,7 +43,6 @@ public class RegistrazioneController {
     @PostMapping
     public ResponseEntity<?> registra(@RequestBody RegistrazioneRequestDTO dto) {
         try {
-            // Trim dei campi stringa per evitare spazi accidentali
             String username = dto.getUsername() != null ? dto.getUsername().trim() : null;
             String email = dto.getEmail() != null ? dto.getEmail().trim().toLowerCase() : null;
             String nome = dto.getNome() != null ? dto.getNome().trim() : null;
@@ -62,40 +52,32 @@ public class RegistrazioneController {
             String password = dto.getPassword();
             String confermaPassword = dto.getConfermaPassword();
 
-            // === 1. VALIDAZIONI DEI TEST CASE ===
 
-            // TC_1.1_1: Username Lunghezza
             if (username == null || username.isEmpty() || username.length() > 30) {
                 return ResponseEntity.badRequest().body("Errato: Nome utente troppo lungo o nullo");
             }
 
-            // TC_1.1_2: Formato Email
             if (email == null || !email.matches(REGEX_EMAIL)) {
                 return ResponseEntity.badRequest().body("Errato: E-Mail non corretta");
             }
 
-            // TC_1.1_3: Lunghezza Password
             if (password == null || !password.matches(REGEX_PASSWORD_LEN)) {
                 return ResponseEntity.badRequest().body("Errato: lunghezza password non corretta (min 8)");
             }
 
-            // TC_1.1_4: Conferma Password Match
             if (confermaPassword == null || !password.equals(confermaPassword)) {
                 return ResponseEntity.badRequest().body("Errato: conferma password errata");
             }
 
-            // TC_1.1_5: Formato Nome
             if (nome == null || !nome.matches(REGEX_NOME_COGNOME)) {
                 return ResponseEntity.badRequest().body("Errato: nome non corretto");
             }
 
-            // TC_1.1_6: Formato Cognome
             if (cognome == null || !cognome.matches(REGEX_NOME_COGNOME)) {
                 return ResponseEntity.badRequest().body("Errato: cognome non corretto");
             }
 
 
-            // TC_1.1_7: Formato Via e Numero Civico
             if (indirizzo != null && !indirizzo.isEmpty() && !indirizzo.matches(REGEX_INDIRIZZO)) {
                 return ResponseEntity.badRequest().body("Errato: Via e numero civico non corretto");
             }
@@ -112,18 +94,15 @@ public class RegistrazioneController {
                 String casa = dto.getCasaProduzione();
                 String credit = dto.getCreditReference();
 
-                // Validazione Casa di Produzione (obbligatoria, solo lettere/spazi/trattini max 30)
                 if (casa == null || casa.trim().isEmpty() || !casa.matches(REGEX_GENERICA_FEDELE)) {
                     return ResponseEntity.badRequest().body("Errore: Casa di produzione non trovata o formato errato");
                 }
 
-                // Validazione Credit Reference (obbligatoria, solo lettere/spazi/trattini max 30)
                 if (credit == null || credit.trim().isEmpty() || !credit.matches(REGEX_GENERICA_FEDELE)) {
                     return ResponseEntity.badRequest().body("Errore: credit reference non valida");
                 }
             }
 
-            // === 2. CONTROLLI UNICITÀ DB ===
             if (utenteService.existsByUsername(username)) {
                 return ResponseEntity.badRequest().body("Username già in uso.");
             }
@@ -131,7 +110,6 @@ public class RegistrazioneController {
                 return ResponseEntity.badRequest().body("Email già registrata.");
             }
 
-            // === 3. CREAZIONE UTENTE ===
             Utente nuovoUtente = new Utente();
             nuovoUtente.setNome(nome);
             nuovoUtente.setCognome(cognome);
@@ -143,10 +121,8 @@ public class RegistrazioneController {
             nuovoUtente.setNumFilmVisti(0);
             nuovoUtente.setAmministratore(false);
 
-            // Nuovi campi
             nuovoUtente.setViaENumCivico(indirizzo);
 
-            // Gestione campi specifici
             if ("Critico".equals(dtype)) {
                 nuovoUtente.setTestataGiornalistica(dto.getTestataGiornalistica());
             } else if ("Fedele".equals(dtype)) {
@@ -154,7 +130,6 @@ public class RegistrazioneController {
                 nuovoUtente.setCreditReference(dto.getCreditReference());
             }
 
-            // Immagine profilo
             if (dto.getImmagineBase64() != null && dto.getImmagineBase64().contains(",")) {
                 String base64Image = dto.getImmagineBase64().split(",")[1];
                 byte[] imageBytes = Base64.getDecoder().decode(base64Image);
@@ -163,7 +138,6 @@ public class RegistrazioneController {
 
             Utente salvato = utenteService.registrazione(nuovoUtente);
 
-            // === 4. LOGIN AUTOMATICO ===
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
             );

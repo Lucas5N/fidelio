@@ -17,9 +17,6 @@ public class FilmListController {
         this.filmService = filmService;
     }
 
-    /**
-     * Mappato direttamente sulla radice /filmlist.
-     */
     @GetMapping("/filmlist")
     public String filmListPage(Model model) {
 

@@ -22,13 +22,10 @@ public class HomeController {
 
     @GetMapping({"/", "/home"})
     public String home(Model model, @AuthenticationPrincipal UserDetails userDetails) {
-        // 1. Carica i film (come prima)
         model.addAttribute("popularFilms", homeService.getPopularCards(4));
         model.addAttribute("newReleases", homeService.getNewReleaseCards(4));
 
-        // 2. LOGICA AGGIUNTA: Passiamo l'UtenteDTO se loggato
         if (userDetails != null) {
-            // Assumi che utenteService abbia un metodo per ottenere il DTO dallo username
             UtenteDTO userDTO = utenteService.mapToDTO(utenteService.findByEmail(userDetails.getUsername()));
             model.addAttribute("userDTO", userDTO);
         } else {

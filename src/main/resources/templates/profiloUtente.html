@@ -141,10 +141,35 @@
         </section>
 
         <section>
-            <h2 class="section-title">Raccomandati per Te</h2>
-            <div class="placeholder-box">
+            <h2 class="section-title">Raccomandati per Te (AI)</h2>
+
+            <div class="lists-grid" th:if="${filmRaccomandati != null and !filmRaccomandati.isEmpty()}">
+                <div class="review-card" th:each="film : ${filmRaccomandati}"
+                     style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+
+                    <img th:if="${film.posterPath != null}"
+                         th:src="${'https://image.tmdb.org/t/p/w200' + film.posterPath}"
+                         style="width: 100%; max-width: 150px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"
+                         alt="Poster">
+
+                    <h3 th:text="${film.title}" style="font-size: 1rem; margin-bottom: 5px; color: #fff;">Titolo Film</h3>
+
+                    <div style="font-size: 0.85rem; color: #aaa; width: 100%; display: flex; justify-content: space-around;">
+                        <span th:text="${film.releaseDate}">2023</span>
+                        <span style="color: #ffd700;">★ <span th:text="${#numbers.formatDecimal(film.voteAverage, 1, 1)}">8.5</span></span>
+                    </div>
+
+                    <a th:href="@{'/film/dettagli/' + ${film.id}}"
+                       style="margin-top: 10px; font-size: 0.8rem; text-decoration: none; color: #f06a2a; border: 1px solid #f06a2a; padding: 4px 8px; border-radius: 4px;">
+                        Vedi
+                    </a>
+                </div>
+            </div>
+
+            <div class="placeholder-box" th:if="${filmRaccomandati == null or filmRaccomandati.isEmpty()}">
                 <div class="placeholder-icon">🤖</div>
-                <p>L'algoritmo sta elaborando i tuoi gusti...</p>
+                <p>Aggiungi dei film alle tue liste private per attivare l'AI!</p>
+                <small style="color: #666;">(O assicurati che il server Python sia acceso)</small>
             </div>
         </section>
 

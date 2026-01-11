@@ -21,9 +21,7 @@ public class RicercaController {
         this.filmService = filmService;
     }
 
-    /**
-     * Cattura il percorso base "/search".
-     */
+
     @GetMapping
     public String search(@RequestParam(value = "q", required = false) String query,
                          @RequestParam(value = "genere", required = false) String genere,
@@ -36,7 +34,6 @@ public class RicercaController {
 
         List<?> results = Collections.emptyList();
 
-        // 1. CASO: RICERCA FILTRATA ATTIVA (Con o Senza query di testo)
         if (cleanedGenere != null || cleanedAnno != null) {
             try {
                 results = filmService.ricercaFiltrata(
@@ -48,9 +45,8 @@ public class RicercaController {
                 System.err.println("Errore durante la ricerca filtrata: " + e.getMessage());
             }
         }
-        // 2. CASO: SOLO RICERCA TESTUALE (Nessun filtro attivo)
         else if (!cleanedQuery.isEmpty()) {
-            try { // <--- CORREZIONE: Aggiunto try-catch per API Error
+            try {
                 results = filmService.ricercaFilm(cleanedQuery, 1);
             } catch (Exception e) {
                 System.err.println("Errore durante la ricerca TMDB: " + e.getMessage());

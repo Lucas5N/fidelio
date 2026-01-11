@@ -42,11 +42,6 @@ public class ListaPrivataService {
         ListaPrivata lista = repository.findById(listaId)
                 .orElseThrow();
 
-//        // sicurezza: solo il proprietario può aggiungere
-//        if (!lista.getProprietario().getEmail().equals(email)) {
-//            throw new AccessDeniedException("Non autorizzato");
-//        }
-
         if (lista.getFilmTmdb().containsKey(tmdbId)) {
             throw new IllegalStateException("Film già presente nella lista");
            }

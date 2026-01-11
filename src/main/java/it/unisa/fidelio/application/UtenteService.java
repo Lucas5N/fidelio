@@ -24,7 +24,6 @@ public class UtenteService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // === METODI PER THREE-TIER ARCHITECTURE ===
 
     public boolean existsByUsername(String username) {
         return utenteRepository.existsByUsername(username);
@@ -42,7 +41,6 @@ public class UtenteService implements UserDetailsService {
         return utenteRepository.findById(id).orElse(null);
     }
 
-    // Login usato dall'API REST (restituisce DTO per il frontend)
     public UtenteDTO login(String email, String password) {
         return utenteRepository.findByEmail(email)
                 .filter(u -> passwordEncoder.matches(password, u.getPassword()))
@@ -50,14 +48,12 @@ public class UtenteService implements UserDetailsService {
                 .orElse(null);
     }
 
-    // Registrazione (chiamata dal controller REST)
     public Utente registrazione(Utente nuovo) {
         // Crittografa la password
         nuovo.setPassword(passwordEncoder.encode(nuovo.getPassword()));
         return utenteRepository.save(nuovo);
     }
 
-    // Mappa Utente → UtenteDTO (usato dopo login/registrazione)
     public UtenteDTO mapToDTO(Utente u) {
         String immagineBase64 = null;
         if (u.getImmagineProfilo() != null) {
@@ -75,7 +71,6 @@ public class UtenteService implements UserDetailsService {
         );
     }
 
-    // === METODO STATICO PER THYMELEAF ===
     public static String encodeToBase64(byte[] image) {
         if (image == null || image.length == 0) {
             return "";
@@ -88,7 +83,6 @@ public class UtenteService implements UserDetailsService {
         Utente utente = utenteRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Utente non trovato: " + email));
 
-        // Restituiamo un UserDetails che contiene l'entità Utente completa
         return new User(
                 utente.getEmail(),
                 utente.getPassword(),

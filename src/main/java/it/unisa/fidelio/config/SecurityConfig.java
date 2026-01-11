@@ -23,12 +23,12 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/",
                                 "/home",
-                                "/film/**",      // <--- AGGIUNGI QUESTO: Permette dettagli e ricerca API
-                                "/movies/**",    // Puoi lasciarlo se hai ancora vecchi link, altrimenti toglilo
+                                "/film/**",
+                                "/movies/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/api/**",       // Utile se hai altre API
+                                "/api/**",
                                 "/login",
                                 "/signup",
                                 "/register",

@@ -36,7 +36,6 @@ public class GestioneFilmController {
         this.listaService = listaService;
     }
 
-    // API Ricerca Film
     @GetMapping("/api/search")
     @ResponseBody
     public ResponseEntity<?> ricercaFilm(@RequestParam(required = false) String query,
@@ -53,7 +52,6 @@ public class GestioneFilmController {
         return ResponseEntity.ok(risultati);
     }
 
-    // API Ricerca Filtrata
     @GetMapping("/api/search/filter")
     @ResponseBody
     public ResponseEntity<?> ricercaFiltrata(@RequestParam(required = false) String genere,
@@ -78,7 +76,6 @@ public class GestioneFilmController {
         return ResponseEntity.ok(risultati);
     }
 
-    // API Creazione Lista
     @PostMapping("/api/lista")
     @ResponseBody
     public ResponseEntity<?> creaLista(@RequestParam(required = false) String titolo,
@@ -102,7 +99,6 @@ public class GestioneFilmController {
         return ResponseEntity.ok("Lista creata con successo");
     }
 
-    // Visualizzazione Dettagli
     @GetMapping("/{filmId}")
     public String visualizzaDettagli(@PathVariable Long filmId,
                                      Model model,
@@ -115,24 +111,20 @@ public class GestioneFilmController {
             return "redirect:/";
         }
 
-        // Popolamento Model BASE
         model.addAttribute("movie", movie);
         model.addAttribute("popularReviews", recensioneService.getTutteLeRecensioni(filmId));
 
-        // 2. Gestione Loggato vs Guest
         if (principal != null) {
             Utente utente = utenteService.findByEmail(principal.getName());
 
             model.addAttribute("utenteLoggato", utente);
             model.addAttribute("isAdmin", utente.getAmministratore());
 
-            // ✅ LISTE UTENTE
             model.addAttribute(
                     "userLists",
                     listaService.getListeUtente(utente.getEmail())
             );
 
-            // ✅ FILM GIÀ PRESENTE NELLE LISTE
             model.addAttribute(
                     "filmInListe",
                     listaService.getFilmInListeMap(

@@ -11,10 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-// Il mapping base è /film/{filmId}/recensioni, MA per visualizzare la pagina
-// dovremo spostare il mapping di 'elencoRecensioni' se vuoi usare /film/{filmId}
-// o accettare che il path sia più lungo. Per ora, lo lasciamo così e correggiamo i test.
-@RequestMapping("/film/{filmId}") // <--- CAMBIATO IL MAPPING BASE PER INCLUDERE ELENCO (vedi nota sotto)
+@RequestMapping("/film/{filmId}")
 public class GestioneRecensioneController {
 
     private final RecensioneService recensioneService;
@@ -29,14 +26,11 @@ public class GestioneRecensioneController {
         this.tmdbClient = tmdbClient;
     }
 
-    // Nota: Ho spostato il mapping /recensioni sul metodo per coerenza con l'URL della vista.
-    // L'URL per la pagina recensioni sarà ora /film/{filmId}/recensioni
+
     @GetMapping("/recensioni")
     public String elencoRecensioni(@PathVariable Long filmId, Model model) {
-        // Gestione film non trovato
         TmdbMovieDetailsDTO movieDetails = tmdbClient.getMovieDetails(filmId);
         if (movieDetails == null) {
-            // Reindirizza a una pagina di errore generica o specifica se il film non esiste su TMDB
             return "redirect:/errorPage";
         }
 
@@ -152,10 +146,8 @@ public class GestioneRecensioneController {
             }
             recensioneService.segnalaRecensione(recensioneId, utenteLoggato.getId(), motivo);
         } catch (IllegalArgumentException e) {
-            // Cattura l'errore e reindirizza alla pagina di errore, non ignora!
             return "redirect:/errorPage";
         } catch (Exception e) {
-            // Errori generici
             return "redirect:/errorPage";
         }
 

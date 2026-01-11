@@ -32,7 +32,6 @@ public class FilmService {
         this.posterBase = posterBase;
     }
 
-    // 1. RICERCA FILM SU TMDB (Risultato sempre in FilmCardDto)
     public List<FilmCardDto> ricercaFilm(String query, int page) {
         TmdbMovieListResponse response = tmdbClient.searchMovies(query, page);
         Map<Integer, String> genreMap = genreService.getGenreMap();
@@ -44,9 +43,7 @@ public class FilmService {
                 .toList();
     }
 
-    // ... (altri metodi come getFilmPopolari, getNowPlaying, getMovieDetailsView rimangono invariati)
 
-    // 2. FILM POPOLARI
     public List<FilmCardDto> getFilmPopolari(int page) {
         TmdbMovieListResponse response = tmdbClient.getPopular(page);
         Map<Integer, String> genreMap = genreService.getGenreMap();
@@ -58,7 +55,6 @@ public class FilmService {
                 .toList();
     }
 
-    // 3. NOW PLAYING
     public List<FilmCardDto> getNowPlaying(int page) {
         TmdbMovieListResponse response = tmdbClient.getNowPlaying(page);
         Map<Integer, String> genreMap = genreService.getGenreMap();
@@ -70,7 +66,6 @@ public class FilmService {
                 .toList();
     }
 
-    // 4. DETTAGLI FILM PER LA PAGINA DETAILS.HTML
     public MovieDetailsView getMovieDetailsView(Long tmdbId) {
         TmdbMovieDetailsDTO d = tmdbClient.getMovieDetails(tmdbId);
         TmdbMovieCreditsDTO c = tmdbClient.getMovieCredits(tmdbId);
@@ -114,20 +109,16 @@ public class FilmService {
         );
     }
 
-    // 5. RICERCA FILTRATA (AGGIORNATA per gestire la query di testo)
     public List<FilmCardDto> ricercaFiltrata(String query, String genereNome, String anno) {
 
         List<TmdbMovieDto> tmdbResults = List.of();
 
-        // 1. CHIAMATA A TMDB: Decidiamo quale API usare
         if (query != null && !query.isEmpty()) {
-            // Caso A: Query di testo E filtri attivi. Usiamo Search API
             TmdbMovieListResponse response = tmdbClient.searchMovies(query, 1);
             if (response != null && response.results() != null) {
                 tmdbResults = response.results();
             }
         } else {
-            // Caso B: Solo filtri attivi (query vuota). Usiamo Discover API
             Integer genreId = null;
             if (genereNome != null && !genereNome.isBlank()) {
                 genreId = genreService.getGenreIdByName(genereNome);
@@ -137,15 +128,13 @@ public class FilmService {
                 tmdbResults = response.results();
             }
 
-            // Se usiamo Discover, non è necessario filtrare ulteriormente localmente,
-            // perché l'API di TMDB gestisce già il filtering per genere/anno in modo nativo.
+
             Map<Integer, String> genreMap = genreService.getGenreMap();
             return tmdbResults.stream()
                     .map(movieDto -> toFilmCardDto(movieDto, genreMap))
                     .toList();
         }
 
-        // 2. FILTRAGGIO LOCALE (SOLO se abbiamo usato l'API di Search con query di testo)
 
         if (!tmdbResults.isEmpty()) {
             // A. Filtra per Anno
@@ -166,7 +155,6 @@ public class FilmService {
             }
         }
 
-        // 3. MAPPING E RITORNO
         Map<Integer, String> genreMap = genreService.getGenreMap();
         return tmdbResults.stream()
                 .map(movieDto -> toFilmCardDto(movieDto, genreMap))
@@ -174,12 +162,10 @@ public class FilmService {
     }
 
 
-    // 6. CREAZIONE LISTA PRIVATA (Supporto per TC_2.3.x)
     public void creaLista(String titolo, int utenteId) {
         // Implementazione placeholder: qui dovresti salvare la lista nel DB.
     }
 
-    // --- METODI PRIVATI DI MAPPING ---
 
     private FilmCardDto toFilmCardDto(TmdbMovieDto m, Map<Integer, String> genreMap) {
         Integer year = null;

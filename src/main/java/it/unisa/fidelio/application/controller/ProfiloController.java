@@ -1,7 +1,9 @@
 package it.unisa.fidelio.application.controller;
 
-import it.unisa.fidelio.application.AdminService; // Importa il servizio admin
+import it.unisa.fidelio.application.AdminService;
+import it.unisa.fidelio.application.ListaRaccomandatiService; // <--- IMPORT NUOVO
 import it.unisa.fidelio.application.UtenteService;
+import it.unisa.fidelio.presentation.TmdbMovieDto; // <--- IMPORT NUOVO
 import it.unisa.fidelio.storage.Utente;
 import it.unisa.fidelio.storage.UtenteRepository;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 public class ProfiloController {
@@ -22,16 +26,19 @@ public class ProfiloController {
     private final UtenteService utenteService;
     private final UtenteRepository utenteRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AdminService adminService; // Aggiunto
+    private final AdminService adminService;
+    private final ListaRaccomandatiService raccomandatiService;
 
     public ProfiloController(UtenteService utenteService,
                              UtenteRepository utenteRepository,
                              PasswordEncoder passwordEncoder,
-                             AdminService adminService) { // Aggiunto nel costruttore
+                             AdminService adminService,
+                             ListaRaccomandatiService raccomandatiService) {
         this.utenteService = utenteService;
         this.utenteRepository = utenteRepository;
         this.passwordEncoder = passwordEncoder;
         this.adminService = adminService;
+        this.raccomandatiService = raccomandatiService;
     }
 
     @GetMapping("/profilo")
@@ -44,13 +51,18 @@ public class ProfiloController {
 
         model.addAttribute("utenteCorrente", utente);
         model.addAttribute("recensioni", utente.getRecensioni());
-        // model.addAttribute("listePrivate", utente.getListePrivate());
 
-        // === LOGICA AMMINISTRATORE ===
+
+        try {
+            List<TmdbMovieDto> raccomandati = raccomandatiService.getRaccomandazioni(utente.getEmail());
+            model.addAttribute("filmRaccomandati", raccomandati);
+        } catch (Exception e) {
+            System.err.println("Errore nel recupero raccomandazioni: " + e.getMessage());
+            model.addAttribute("filmRaccomandati", new ArrayList<>());
+        }
+
         if (Boolean.TRUE.equals(utente.getAmministratore())) {
-            // Carica tutti gli utenti tranne se stesso (opzionale, ma consigliato)
             model.addAttribute("listaUtenti", utenteRepository.findAll());
-            // Carica le segnalazioni aperte
             model.addAttribute("listaSegnalazioni", adminService.getSegnalazioniAperte());
         }
 
