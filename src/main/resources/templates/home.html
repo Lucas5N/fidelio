@@ -247,22 +247,13 @@
                     <!-- Cinefilo -->
                     <article class="plan-card is-active" data-plan="cinefilo" tabindex="0" role="button" aria-label="Select Cinefilo">
                         <div class="plan-top">
-                            <div class="plan-icon" aria-hidden="true">
-                                <!-- Icona inventata -->
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M7 7h10v10H7V7Z" stroke="currentColor" stroke-width="1.6"/>
-                                    <path d="M9 7V5m6 2V5M9 19v-2m6 2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M6 10h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                </svg>
-                            </div>
-
                             <div>
                                 <h3 class="plan-title">Cinefilo</h3>
                                 <p class="plan-sub">Track, rate and build your diary</p>
                             </div>
                         </div>
 
-                        <a class="plan-cta" th:href="@{/signup}">Create account</a>
+                        <a class="plan-cta" th:href="@{/signup?tier=cinefilo}">Create account</a>
 
                         <hr class="plan-divider" />
 
@@ -278,13 +269,8 @@
                     <article class="plan-card plan-card--featured" data-plan="critico" tabindex="0" role="button" aria-label="Select Critico">
                         <div class="plan-top">
                             <div class="plan-icon" aria-hidden="true">
-                                <!-- Icona inventata -->
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M7 20h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M8 16l8-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M14.5 6.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M7.8 16.2l-.8 3.8 3.8-.8" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-                                    <path d="M12 3.5c2.5 0 4.5 2 4.5 4.5S14.5 12.5 12 12.5 7.5 10.5 7.5 8 9.5 3.5 12 3.5Z" stroke="currentColor" stroke-width="1.6" opacity=".45"/>
+                                <svg class="icon-badge verified-blue" viewBox="0 0 24 24">
+                                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7l-3.3-3.3 1.4-1.4 1.9 1.9 4.6-4.6 1.4 1.4-6 6z"/>
                                 </svg>
                             </div>
 
@@ -294,7 +280,7 @@
                             </div>
                         </div>
 
-                        <a class="plan-cta" th:href="@{/signup}">Get verified</a>
+                        <a class="plan-cta" th:href="@{/signup?tier=critico}">Get verified</a>
 
                         <hr class="plan-divider" />
 
@@ -310,12 +296,8 @@
                     <article class="plan-card" data-plan="fedele" tabindex="0" role="button" aria-label="Select Fedele">
                         <div class="plan-top">
                             <div class="plan-icon" aria-hidden="true">
-                                <!-- Icona inventata -->
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M8.5 14c1.5 1 5.5 1 7 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M6.5 19c.8-2.6 2.8-4 5.5-4s4.7 1.4 5.5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                    <path d="M9.2 10.2a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z" stroke="currentColor" stroke-width="1.6"/>
-                                    <path d="M14.8 10.2a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+                                <svg class="icon-badge troupe-gold" viewBox="0 0 24 24">
+                                    <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
                                 </svg>
                             </div>
 
@@ -325,7 +307,7 @@
                             </div>
                         </div>
 
-                        <a class="plan-cta" th:href="@{/signup}">Start a community</a>
+                        <a class="plan-cta" th:href="@{/signup?tier=fedele}">Start a community</a>
 
                         <hr class="plan-divider" />
 
@@ -361,7 +343,7 @@
                     </ul>
 
                     <div class="community-feature__actions">
-                        <a class="btn" th:href="@{/signup}">Create a Community</a>
+                        <a class="btn" th:href="@{/signup?tier=fedele}">Create a Community</a>
                         <a class="btn" th:href="@{/communities}">Browse Communities</a>
                     </div>
                 </div>

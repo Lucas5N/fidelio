@@ -982,6 +982,17 @@ body.is-logged .guest-content {
     text-decoration: underline;
 }
 
+.icon-badge {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.verified-blue {
+    fill: #3897f0;
+}
+.troupe-gold {
+    fill: #ffcc00;
+}
 
 
 
