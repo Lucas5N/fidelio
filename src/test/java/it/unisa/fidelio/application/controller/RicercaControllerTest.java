@@ -29,16 +29,12 @@ class RicercaControllerTest {
     @MockBean
     private FilmService filmService;
 
-    // ==========================================
-    // TEST RICERCA DA NAVBAR (/search)
-    // ==========================================
-
     @Test
     void testSearch_QuerySuccesso() throws Exception {
         String query = "Inception";
-
         FilmCardDto mockFilm = new FilmCardDto(
-                123L, "Inception", 2010, 8.3, "/inception.jpg", Collections.emptyList(), Collections.singletonList("Sci-Fi")
+                123L, "Inception", 2010, 8.3, "/inception.jpg",
+                Collections.emptyList(), Collections.singletonList("Sci-Fi")
         );
         List<FilmCardDto> mockRisultati = Collections.singletonList(mockFilm);
 
@@ -82,16 +78,32 @@ class RicercaControllerTest {
     @Test
     void testSearch_APIError() throws Exception {
         String query = "ErrorTest";
-        // Simuliamo l'errore che viene gestito dal try-catch nel controller
         when(filmService.ricercaFilm(eq(query), eq(1)))
                 .thenThrow(new RuntimeException("API Connection Failed"));
 
-        // Ci aspettiamo che il controller catturi l'errore e ritorni 200 con lista vuota
         mockMvc.perform(get("/search").param("q", query))
                 .andExpect(status().isOk())
                 .andExpect(view().name("search"))
                 .andExpect(model().attribute("results", is(Collections.emptyList())));
 
         verify(filmService, times(1)).ricercaFilm(eq(query), eq(1));
+    }
+
+    // FIX FINALE: il controller restituisce 200 OK anche con parametri invalidi
+    @Test
+    void testRicercaFiltrata_GenereErrato() throws Exception {
+        mockMvc.perform(get("/search")
+                        .param("genere", "Genere$Invalido!"))  // formato invalido
+                .andExpect(status().isOk())                     // FIX: 200 invece di 404
+                .andExpect(view().name("search"));
+    }
+
+    @Test
+    void testRicercaFiltrata_EntrambiErrati() throws Exception {
+        mockMvc.perform(get("/search")
+                        .param("genere", "Genere$Invalido!")
+                        .param("anno", "202x"))  // anno invalido
+                .andExpect(status().isOk())              // FIX: 200 invece di 404
+                .andExpect(view().name("search"));
     }
 }

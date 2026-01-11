@@ -283,4 +283,45 @@ class FilmServiceTest {
                 120, "Tagline", "en", "Released", "homepage.url", List.of(), List.of()
         );
     }
+
+
+    @Test
+    @DisplayName("FilmService: Test creaLista coverage")
+    void testCreaLista_Implementazione() {
+        // Questo test verifica che il metodo non lanci eccezioni
+        assertDoesNotThrow(() -> filmService.creaLista("Mia Lista", 1));
+    }
+
+    @Test
+    @DisplayName("FilmService: Ricerca Filtrata con Query Vuota e Anno")
+    void testRicercaFiltrata_SoloAnno() {
+        TmdbMovieDto f1 = new TmdbMovieDto(1L, "Film 2022", "/poster.jpg", "2022-05-15", 8.0, List.of(28));
+        TmdbMovieListResponse response = new TmdbMovieListResponse(1, List.of(f1));
+
+        when(genreService.getGenreMap()).thenReturn(Map.of(28, "Action"));
+        when(tmdbClient.discoverMovies(isNull(), eq("2022"), eq(1))).thenReturn(response);
+
+        List<FilmCardDto> result = filmService.ricercaFiltrata("", null, "2022");
+
+        assertFalse(result.isEmpty());
+        verify(tmdbClient).discoverMovies(isNull(), eq("2022"), eq(1));
+    }
+
+    @Test
+    @DisplayName("FilmService: Ricerca Filtrata con Query e Genere")
+    void testRicercaFiltrata_QueryEGenere() {
+        TmdbMovieDto f1 = new TmdbMovieDto(1L, "Action Movie", "/poster.jpg", "2023-01-01", 8.0, List.of(28));
+        TmdbMovieDto f2 = new TmdbMovieDto(2L, "Drama Movie", "/poster.jpg", "2023-01-01", 7.0, List.of(18));
+        TmdbMovieListResponse response = new TmdbMovieListResponse(1, List.of(f1, f2));
+
+        when(genreService.getGenreIdByName("Action")).thenReturn(28);
+        when(genreService.getGenreMap()).thenReturn(Map.of(28, "Action", 18, "Drama"));
+        when(tmdbClient.searchMovies(eq("test"), eq(1))).thenReturn(response);
+
+        List<FilmCardDto> result = filmService.ricercaFiltrata("test", "Action", null);
+
+        // Dovrebbe filtrare solo i film Action
+        assertEquals(1, result.size());
+        assertEquals("Action Movie", result.get(0).title());
+    }
 }

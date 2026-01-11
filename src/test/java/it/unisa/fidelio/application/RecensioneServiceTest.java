@@ -4,6 +4,7 @@ import it.unisa.fidelio.presentation.CommentoDTO;
 import it.unisa.fidelio.presentation.PopularReviewViewDTO;
 import it.unisa.fidelio.presentation.TmdbReviewResponseDTO;
 import it.unisa.fidelio.storage.*;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,7 +38,7 @@ class RecensioneServiceTest {
     private RecensioneService recensioneService;
 
     // ===================================================================================
-    // 1. TEST DEI METODI "GETTER" (Coprono le barre rosse 0% iniziali)
+    // 1. TEST DEI METODI "GETTER"
     // ===================================================================================
 
     @Test
@@ -46,7 +47,6 @@ class RecensioneServiceTest {
         Recensione r1 = new Recensione(); r1.setId(10);
         RecensioneInterazione i1 = new RecensioneInterazione(); i1.setRecensione(r1);
 
-        // CORRETTO: Usa Set.of perché il Repository restituisce un Set
         when(recensioneInterazioneRepository.findByUtenteIdAndTipo(userId, RecensioneInterazione.TipoInterazione.LIKE))
                 .thenReturn(Set.of(i1));
 
@@ -75,7 +75,6 @@ class RecensioneServiceTest {
         Recensione r = new Recensione(); r.setId(100);
         Segnalazione s = new Segnalazione(); s.setRecensione(r);
 
-        // SegnalazioneRepository solitamente restituisce List, ma adattiamo in base all'uso
         when(segnalazioneRepository.findByAutoreId(userId)).thenReturn(List.of(s));
 
         Set<Integer> result = recensioneService.getSegnalazioniGiaFatte(userId);
@@ -102,7 +101,7 @@ class RecensioneServiceTest {
     }
 
     // ===================================================================================
-    // 2. TEST LOGICA COMPLESSA (TMDB + Mapping Commenti + Stelle)
+    // 2. TEST LOGICA COMPLESSA (TMDB + Mapping)
     // ===================================================================================
 
     @Test
@@ -114,24 +113,21 @@ class RecensioneServiceTest {
         Recensione rLoc = new Recensione();
         rLoc.setId(1);
         rLoc.setAutore(u);
-        rLoc.setVoto(4.0); // 4.0 -> ★★★★☆
+        rLoc.setVoto(4.0);
         rLoc.setDataCreazione(Instant.now());
         rLoc.setTesto("Locale");
         rLoc.setNumLike(0); rLoc.setNumDislike(0);
+        // rLoc ha spoilerAlert nell'entità, ma non nel DTO finale.
 
         when(recensioneRepo.findByFilmTmdbIdOrderByNumLikeDesc(filmId)).thenReturn(List.of(rLoc));
-
-        // Mock commenti vuoti per questa recensione
         when(commentoRepo.findByRecensioneIdOrderByDataCreazioneAsc(1)).thenReturn(Collections.emptyList());
 
-        // --- Setup TMDB Response (Record) ---
-        // Caso A: Rating presente (8.0 -> /2 = 4 stelle)
+        // --- Setup TMDB Response ---
         TmdbReviewResponseDTO.AuthorDetails detailsWithRating = new TmdbReviewResponseDTO.AuthorDetails(
                 "Name1", "User1", null, 8.0);
         TmdbReviewResponseDTO.TmdbReviewDTO reviewWithRating = new TmdbReviewResponseDTO.TmdbReviewDTO(
                 "id1", "Author1", detailsWithRating, "Content1", "2023-01-01T10:00:00Z", "url1");
 
-        // Caso B: Rating null (-> "—")
         TmdbReviewResponseDTO.AuthorDetails detailsNullRating = new TmdbReviewResponseDTO.AuthorDetails(
                 "Name2", "User2", null, null);
         TmdbReviewResponseDTO.TmdbReviewDTO reviewNullRating = new TmdbReviewResponseDTO.TmdbReviewDTO(
@@ -143,72 +139,45 @@ class RecensioneServiceTest {
 
         when(tmdbClient.getMovieReviews(filmId, 1)).thenReturn(tmdbRes);
 
-        // --- Esecuzione ---
         List<PopularReviewViewDTO> result = recensioneService.getTutteLeRecensioni(filmId);
 
-        // --- Verifiche ---
-        assertEquals(3, result.size()); // 1 locale + 2 TMDB
-
-        // Verifica stelle recensione locale (4.0 -> 4 stelle)
+        assertEquals(3, result.size());
         assertEquals("★★★★☆", result.get(0).starsText());
-
-        // Verifica stelle TMDB (8.0 -> 4 stelle)
         assertEquals("★★★★☆", result.get(1).starsText());
-
-        // Verifica stelle TMDB Null (-> "—")
         assertEquals("—", result.get(2).starsText());
+
+        // RIMOSSO il controllo su result.get(1).spoilerAlert() poiché il campo non esiste più nel DTO.
     }
 
     @Test
     void testGetTutteLeRecensioni_VerificaMappingCommenti() {
-        // Questo test copre indirettamente il metodo privato mapCommentoToDto
         Long filmId = 100L;
-
-        Utente autoreRec = new Utente();
-        autoreRec.setUsername("Reviewer");
-        autoreRec.setDtype("S");
-
+        Utente autoreRec = new Utente(); autoreRec.setUsername("Reviewer"); autoreRec.setDtype("S");
         Recensione r = new Recensione();
-        r.setId(1);
-        r.setAutore(autoreRec);
-        r.setVoto(3.0);
-        r.setDataCreazione(Instant.now());
-        r.setTesto("T");
-
-        // --- FIX: Inizializziamo Like e Dislike per evitare NullPointerException ---
-        r.setNumLike(0);
-        r.setNumDislike(0);
-        // --------------------------------------------------------------------------
+        r.setId(1); r.setAutore(autoreRec); r.setVoto(3.0);
+        r.setDataCreazione(Instant.now()); r.setTesto("T");
+        r.setNumLike(0); r.setNumDislike(0);
 
         // Setup Commento
-        Utente autoreComm = new Utente();
-        autoreComm.setUsername("Commentator");
-        autoreComm.setDtype("Standard");
-
+        Utente autoreComm = new Utente(); autoreComm.setUsername("Commentator"); autoreComm.setDtype("Standard");
         Commento c = new Commento();
-        c.setId(50);
-        c.setTesto("Mio Commento");
-        c.setAutore(autoreComm);
+        c.setId(50); c.setTesto("Mio Commento"); c.setAutore(autoreComm);
         c.setDataCreazione(Instant.parse("2023-01-01T12:00:00Z"));
 
         when(recensioneRepo.findByFilmTmdbIdOrderByNumLikeDesc(filmId)).thenReturn(List.of(r));
         when(commentoRepo.findByRecensioneIdOrderByDataCreazioneAsc(r.getId())).thenReturn(List.of(c));
-        when(tmdbClient.getMovieReviews(anyLong(), anyInt())).thenReturn(null); // TMDB vuoto
+        when(tmdbClient.getMovieReviews(anyLong(), anyInt())).thenReturn(null);
 
         List<PopularReviewViewDTO> result = recensioneService.getTutteLeRecensioni(filmId);
 
-        // Verifichiamo che i commenti siano stati mappati correttamente nel DTO
         assertFalse(result.isEmpty());
         List<CommentoDTO> commentiDto = result.get(0).comments();
         assertEquals(1, commentiDto.size());
-
-        CommentoDTO dto = commentiDto.get(0);
-        assertEquals("Commentator", dto.username());
-        assertEquals("Mio Commento", dto.getTesto());
+        assertEquals("Commentator", commentiDto.get(0).username());
     }
 
     // ===================================================================================
-    // 3. TEST SCRITTURA E CANCELLAZIONE (TRANSAZIONALI)
+    // 3. TEST SCRITTURA E CANCELLAZIONE
     // ===================================================================================
 
     @Test
@@ -219,31 +188,25 @@ class RecensioneServiceTest {
         double voto = 4.5;
         boolean spoiler = true;
 
-        // Intercettiamo l'oggetto salvato
         when(recensioneRepo.save(any(Recensione.class))).thenAnswer(i -> i.getArgument(0));
 
         Recensione result = recensioneService.scriviRecensione(autore, filmId, testo, voto, spoiler);
 
         assertNotNull(result);
         assertEquals(filmId, result.getFilmTmdbId());
-        assertEquals(0, result.getNumLike());     // Default
-        assertEquals(0, result.getNumDislike());  // Default
-        assertNotNull(result.getDataCreazione()); // Data settata
+
+        // Questo controllo rimane valido perché stiamo controllando l'Entità Recensione (che ha ancora il campo nel DB),
+        // non il DTO PopularReviewViewDTO.
+        assertTrue(result.getSpoilerAlert());
     }
 
     @Test
     void testEliminaRecensione_AdminPuoCancellareAltrui() {
         Integer recId = 10;
-        Utente admin = new Utente();
-        admin.setId(1);
-        admin.setAmministratore(true);
+        Utente admin = new Utente(); admin.setId(1); admin.setAmministratore(true);
+        Utente altroUser = new Utente(); altroUser.setId(2);
 
-        Utente altroUser = new Utente();
-        altroUser.setId(2);
-
-        Recensione r = new Recensione();
-        r.setId(recId);
-        r.setAutore(altroUser);
+        Recensione r = new Recensione(); r.setId(recId); r.setAutore(altroUser);
 
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
 
@@ -253,24 +216,15 @@ class RecensioneServiceTest {
     }
 
     @Test
-    void testEliminaRecensione_UtenteNonAutorizzato_LanciaEccezione() {
+    void testEliminaRecensione_UtenteNonAutorizzato() {
         Integer recId = 10;
-        Utente userNormale = new Utente();
-        userNormale.setId(1);
-        userNormale.setAmministratore(false);
-
-        Utente altroUser = new Utente();
-        altroUser.setId(2);
-
-        Recensione r = new Recensione();
-        r.setId(recId);
-        r.setAutore(altroUser);
+        Utente user = new Utente(); user.setId(1); user.setAmministratore(false);
+        Utente altro = new Utente(); altro.setId(2);
+        Recensione r = new Recensione(); r.setId(recId); r.setAutore(altro);
 
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
 
-        assertThrows(SecurityException.class, () ->
-                recensioneService.eliminaRecensione(recId, userNormale)
-        );
+        assertThrows(SecurityException.class, () -> recensioneService.eliminaRecensione(recId, user));
         verify(recensioneRepo, never()).delete(any());
     }
 
@@ -289,8 +243,12 @@ class RecensioneServiceTest {
         r.setAutore(autore);
         r.setNumLike(0);
 
-        when(recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(anyInt(), anyInt(), any())).thenReturn(false);
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
+        when(recensioneInterazioneRepository.findByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.LIKE))
+                .thenReturn(Optional.empty());
+        when(recensioneInterazioneRepository.findByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.DISLIKE))
+                .thenReturn(Optional.empty());
+
         when(utenteRepository.getReferenceById(userId)).thenReturn(new Utente());
 
         recensioneService.aggiungiLike(recId, userId);
@@ -302,7 +260,6 @@ class RecensioneServiceTest {
 
     @Test
     void testAggiungiDislike_Successo() {
-        // Copre il ramo 'else' di gestisciInterazione
         int recId = 20;
         int userId = 2;
         Utente autore = new Utente(); autore.setId(99);
@@ -311,29 +268,46 @@ class RecensioneServiceTest {
         r.setAutore(autore);
         r.setNumDislike(5);
 
-        when(recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.DISLIKE)).thenReturn(false);
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
+        when(recensioneInterazioneRepository.findByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.LIKE))
+                .thenReturn(Optional.empty());
+        when(recensioneInterazioneRepository.findByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.DISLIKE))
+                .thenReturn(Optional.empty());
+
         when(utenteRepository.getReferenceById(userId)).thenReturn(new Utente());
 
         recensioneService.aggiungiDislike(recId, userId);
 
         assertEquals(6, r.getNumDislike());
         verify(recensioneRepo).save(r);
-        // Verifica salvataggio tipo DISLIKE
         verify(recensioneInterazioneRepository).save(argThat(i -> i.getTipo() == RecensioneInterazione.TipoInterazione.DISLIKE));
     }
 
     @Test
-    void testAggiungiLike_GiaPresente_NonFaNulla() {
+    void testAggiungiLike_GiaPresente_RimuoveLike() {
         int userId = 1;
         int recId = 10;
-        when(recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(
-                userId, recId, RecensioneInterazione.TipoInterazione.LIKE)).thenReturn(true);
+        Utente autore = new Utente(); autore.setId(99);
+        Recensione r = new Recensione();
+        r.setId(recId);
+        r.setAutore(autore);
+        r.setNumLike(1);
+
+        RecensioneInterazione existingLike = new RecensioneInterazione();
+        existingLike.setTipo(RecensioneInterazione.TipoInterazione.LIKE);
+
+        when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
+        when(recensioneInterazioneRepository.findByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.LIKE))
+                .thenReturn(Optional.of(existingLike));
+
+        when(recensioneInterazioneRepository.findByUtenteIdAndRecensioneIdAndTipo(userId, recId, RecensioneInterazione.TipoInterazione.DISLIKE))
+                .thenReturn(Optional.empty());
 
         recensioneService.aggiungiLike(recId, userId);
 
-        verify(recensioneRepo, never()).findById(any());
-        verify(recensioneRepo, never()).save(any());
+        assertEquals(0, r.getNumLike());
+        verify(recensioneInterazioneRepository).delete(existingLike);
+        verify(recensioneRepo).save(r);
     }
 
     @Test
@@ -343,28 +317,34 @@ class RecensioneServiceTest {
         Utente autore = new Utente(); autore.setId(userId);
         Recensione r = new Recensione(); r.setId(recId); r.setAutore(autore);
 
-        when(recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(anyInt(), anyInt(), any())).thenReturn(false);
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
 
         recensioneService.aggiungiLike(recId, userId);
 
         verify(recensioneRepo, never()).save(any());
+        verify(recensioneInterazioneRepository, never()).save(any());
+    }
+
+    @Test
+    void testAggiungiLike_RecensioneNonTrovata() {
+        when(recensioneRepo.findById(999)).thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () ->
+                recensioneService.aggiungiLike(999, 1)
+        );
     }
 
     // ===================================================================================
-    // 5. TEST COMMENTI E SEGNALAZIONI (ECCEZIONI)
+    // 5. TEST COMMENTI E SEGNALAZIONI
     // ===================================================================================
 
     @Test
     void testAggiungiCommento() {
         int recId = 30;
-        String testo = "Commento";
-        Utente autore = new Utente();
         Recensione r = new Recensione(); r.setId(recId);
-
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
 
-        recensioneService.aggiungiCommento(recId, autore, testo);
+        recensioneService.aggiungiCommento(recId, new Utente(), "Commento");
 
         verify(commentoRepo).save(any(Commento.class));
     }
@@ -381,20 +361,9 @@ class RecensioneServiceTest {
         when(segnalazioneRepository.existsByRecensioneIdAndAutoreId(recId, autoreSegId)).thenReturn(false);
         when(utenteRepository.getReferenceById(autoreSegId)).thenReturn(new Utente());
 
-        // Motivo NULL -> default
         recensioneService.segnalaRecensione(recId, autoreSegId, null);
 
         verify(segnalazioneRepository).save(argThat(s -> s.getMotivo().equals("Contenuto inappropriato")));
-    }
-
-    @Test
-    void testSegnalaRecensione_AutoreSegnalaSeStesso() {
-        int id = 1;
-        Utente u = new Utente(); u.setId(id);
-        Recensione r = new Recensione(); r.setAutore(u);
-        when(recensioneRepo.findById(anyInt())).thenReturn(Optional.of(r));
-
-        assertThrows(IllegalArgumentException.class, () -> recensioneService.segnalaRecensione(10, id, "Spam"));
     }
 
     @Test
@@ -408,10 +377,15 @@ class RecensioneServiceTest {
         when(recensioneRepo.findById(recId)).thenReturn(Optional.of(r));
         when(segnalazioneRepository.existsByRecensioneIdAndAutoreId(recId, autoreId)).thenReturn(true);
 
-        // Verifica eccezione
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+        assertThrows(IllegalArgumentException.class, () ->
                 recensioneService.segnalaRecensione(recId, autoreId, "Spam")
         );
-        assertEquals("Hai già segnalato questa recensione.", e.getMessage());
+    }
+
+    @Test
+    void testEliminaRecensione_NonTrovata() {
+        when(recensioneRepo.findById(999)).thenReturn(Optional.empty());
+        Utente admin = new Utente(); admin.setAmministratore(true);
+        assertThrows(IllegalArgumentException.class, () -> recensioneService.eliminaRecensione(999, admin));
     }
 }

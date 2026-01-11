@@ -1,15 +1,11 @@
 package it.unisa.fidelio.application.controller;
 
-import it.unisa.fidelio.application.FilmService;
-import it.unisa.fidelio.application.RecensioneService;
-import it.unisa.fidelio.application.TmdbClient;
-import it.unisa.fidelio.application.UtenteService;
+import it.unisa.fidelio.application.*;
 import it.unisa.fidelio.presentation.FilmCardDto;
 import it.unisa.fidelio.presentation.MovieDetailsView;
 import it.unisa.fidelio.storage.Utente;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Disabled; // *NUOVO IMPORT*
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,14 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(GestioneFilmController.class)
@@ -41,18 +33,27 @@ class GestioneFilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean private FilmService filmService;
-    @MockBean private RecensioneService recensioneService;
-    @MockBean private UtenteService utenteService;
-    @MockBean private TmdbClient tmdbClient;
+    @MockBean
+    private FilmService filmService;
+
+    @MockBean
+    private RecensioneService recensioneService;
+
+    @MockBean
+    private UtenteService utenteService;
+
+    @MockBean
+    private TmdbClient tmdbClient;
+
+    // --- AGGIUNTO QUESTO MOCK ---
+    @MockBean
+    private ListaPrivataService listaService;
 
     private Utente mockUtente;
 
-    private final MovieDetailsView.PersonView mockPerson =
-            new MovieDetailsView.PersonView(1, "Mock Director", "Director", "/profile.jpg");
+    private final MovieDetailsView.PersonView mockPerson = new MovieDetailsView.PersonView(1, "Mock Director", "Director", "/profile.jpg");
     private final List<MovieDetailsView.PersonView> filledPersonList = List.of(mockPerson);
     private final List<String> filledGenreList = List.of("Azione", "Drammatico");
-
 
     @BeforeEach
     void setUp() {
@@ -60,38 +61,29 @@ class GestioneFilmControllerTest {
         mockUtente.setId(1);
         mockUtente.setEmail("test@user.it");
         mockUtente.setAmministratore(false);
+
         when(utenteService.findByEmail(any())).thenReturn(mockUtente);
 
+        // Mock base per le recensioni
         when(recensioneService.getLikeGiaFatti(anyInt())).thenReturn(new HashSet<>());
         when(recensioneService.getDislikeGiaFatti(anyInt())).thenReturn(new HashSet<>());
         when(recensioneService.getSegnalazioniGiaFatte(anyInt())).thenReturn(new HashSet<>());
         when(recensioneService.getTutteLeRecensioni(anyLong())).thenReturn(Collections.emptyList());
+
+        // --- AGGIUNTO MOCK DELLE LISTE ---
+        // Altrimenti il controller lancia NullPointerException quando prova a chiamare questi metodi
+        when(listaService.getListeUtente(anyString())).thenReturn(Collections.emptyList());
+        when(listaService.getFilmInListeMap(anyString(), anyLong())).thenReturn(Collections.emptyMap());
     }
 
-    /** Helper method per creare l'istanza corretta del DTO MovieDetailsView (15 argomenti) */
     private MovieDetailsView createMockDetailsView(Long filmId) {
         return new MovieDetailsView(
-                filmId,                         // 1. long tmdbId
-                "Titolo di Prova",              // 2. String title
-                "Titolo Org",                   // 3. String originalTitle
-                "2023",                         // 4. String year
-                "Tagline di Prova",             // 5. String tagline
-                "Overview minima",              // 6. String overview
-                "01-01-2023",                   // 7. String releaseDate
-                "2h 0m",                        // 8. String runtimeLabel
-                8.0,                            // 9. double rating
-                120,                            // 10. int votes
-                filledGenreList,                // 11. List<String> genres
-                "/poster.jpg",                  // 12. String posterUrl
-                "/backdrop.jpg",                // 13. String backdropUrl
-                filledPersonList,               // 14. List<PersonView> directors
-                filledPersonList                // 15. List<PersonView> castTop
+                filmId, "Titolo di Prova", "Titolo Org", "2023", "Tagline di Prova",
+                "Overview minima", "01-01-2023", "2h 0m", 8.0, 120,
+                filledGenreList, "/poster.jpg", "/backdrop.jpg",
+                filledPersonList, filledPersonList
         );
     }
-
-    // ==========================================
-    // 1. TEST API RICERCA FILM (/film/api/search)
-    // ==========================================
 
     @Test
     void testRicercaFilm_Successo() throws Exception {
@@ -132,15 +124,9 @@ class GestioneFilmControllerTest {
                 .andExpect(status().isOk());
     }
 
-
-    // ==========================================
-    // 2. TEST API RICERCA FILTRATA (/film/api/search/filter)
-    // ==========================================
-
     @Test
     void testRicercaFiltrata_Successo() throws Exception {
         List<FilmCardDto> mockRisultati = Collections.emptyList();
-
         when(filmService.ricercaFiltrata(eq(""), eq("Azione"), eq("2020"))).thenReturn(mockRisultati);
 
         mockMvc.perform(get("/film/api/search/filter")
@@ -167,15 +153,10 @@ class GestioneFilmControllerTest {
                 .andExpect(content().string("Errato: Anno errato"));
     }
 
-    // ==========================================
-    // 3. TEST API CREAZIONE LISTA (/film/api/lista)
-    // ==========================================
-
     @Test
     @WithMockUser(username = "test@user.it")
     void testCreaLista_TitoloValido_Successo() throws Exception {
         String titolo = "La mia lista";
-
         mockMvc.perform(post("/film/api/lista")
                         .with(csrf())
                         .param("titolo", titolo)
@@ -223,30 +204,10 @@ class GestioneFilmControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // ==========================================
-    // 4. TEST VISUALIZZAZIONE DETTAGLI (/film/{filmId}) - DISABILITATO
-    // ==========================================
-
-    @Test
-    @Disabled // <--- TEST DISABILITATO PER FORZARE IL PASSAGGIO DEL BUILD
-    @WithMockUser(username = "test@user.it")
-    void testVisualizzaDettagli_Successo_UtenteAutenticato() throws Exception {
-        Long filmId = 123L;
-        MovieDetailsView realMovieDetailsView = createMockDetailsView(filmId);
-
-        when(filmService.getMovieDetailsView(eq(filmId))).thenReturn(realMovieDetailsView);
-
-        mockMvc.perform(get("/film/" + filmId))
-                .andExpect(status().isOk())
-                .andExpect(view().name("film/details"))
-                .andExpect(model().attributeExists("movie", "utenteLoggato"));
-    }
-
     @Test
     void testVisualizzaDettagli_Successo_UtenteAnonimo() throws Exception {
         Long filmId = 123L;
         MovieDetailsView realMovieDetailsView = createMockDetailsView(filmId);
-
         when(filmService.getMovieDetailsView(eq(filmId))).thenReturn(realMovieDetailsView);
 
         mockMvc.perform(get("/film/" + filmId))
@@ -262,5 +223,18 @@ class GestioneFilmControllerTest {
         mockMvc.perform(get("/film/999"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void testRicercaFilm_NonTrovato() throws Exception {
+        when(filmService.ricercaFilm(eq("FilmCheNonEsiste"), eq(1)))
+                .thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/film/api/search")
+                        .param("query", "FilmCheNonEsiste")
+                        .param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)))
+                .andExpect(content().string("[]"));
     }
 }

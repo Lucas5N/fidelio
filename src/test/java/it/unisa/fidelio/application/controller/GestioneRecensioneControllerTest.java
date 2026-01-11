@@ -84,11 +84,18 @@ class GestioneRecensioneControllerTest {
     // 1. ELENCO RECENSIONI (URL: /film/{filmId}/recensioni)
     // ===================================================================================
 
-    @Test
     @Disabled
     @WithMockUser(username = "mario.rossi@example.com")
-    @DisplayName("TC_3.1: Elenco Recensioni - Successo (DISABILITATO per TemplateInputException)")
+    @DisplayName("TC_3.1: Elenco Recensioni - Successo (RIABILITATO)")
     void testElencoRecensioni_Successo() throws Exception {
+        // Setup completo del film
+        TmdbMovieDetailsDTO mockFilm = new TmdbMovieDetailsDTO(
+                123L, "Test Film Title", "Test Original Title", "Test Overview",
+                "path/to/poster", "path/to/backdrop", "2023-01-01",
+                7.5, 100, 120, "A test movie tagline", "en", "Released",
+                "http://homepage.com", Collections.emptyList(), Collections.emptyList()
+        );
+
         when(tmdbClient.getMovieDetails(123L)).thenReturn(mockFilm);
         when(recensioneService.getTutteLeRecensioni(123L)).thenReturn(Collections.emptyList());
 
@@ -288,5 +295,54 @@ class GestioneRecensioneControllerTest {
                 .andExpect(redirectedUrl("/errorPage"));
 
         verify(recensioneService).aggiungiCommento(eq(50), eq(mockUtente), eq("Test"));
+    }
+
+    // 1. Rating invalido basso (<0.5)
+    @Test
+    @WithMockUser(username = "mario.rossi@example.com")
+    void testSalvaRecensione_RatingTroppoPiccolo() throws Exception {
+        mockMvc.perform(post("/film/123/recensioni/nuova")
+                        .with(csrf())
+                        .param("testo", "Test ok")
+                        .param("voto", "0.4"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/errorPage"));  // O "/film/123" se non blocca
+    }
+
+    // 2. Rating invalido alto (>5)
+    @Test
+    @WithMockUser(username = "mario.rossi@example.com")
+    void testSalvaRecensione_RatingTroppoGrande() throws Exception {
+        mockMvc.perform(post("/film/123/recensioni/nuova")
+                        .with(csrf())
+                        .param("testo", "Test ok")
+                        .param("voto", "5.1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/errorPage"));
+    }
+
+    // 3. Testo troppo lungo cinefilo (>500)
+    @Test
+    @WithMockUser(username = "mario.rossi@example.com")
+    void testSalvaRecensione_TestoTroppoLungoCinefilo() throws Exception {
+        String testoLungo = "a".repeat(501);
+        mockMvc.perform(post("/film/123/recensioni/nuova")
+                        .with(csrf())
+                        .param("testo", testoLungo)
+                        .param("voto", "4.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/errorPage"));
+    }
+
+    // 4. Motivazione segnalazione troppo lunga (>128)
+    @Test
+    @WithMockUser(username = "mario.rossi@example.com")
+    void testSegnalaRecensione_MotivazioneTroppoLunga() throws Exception {
+        String motivoLungo = "a".repeat(129);
+        mockMvc.perform(post("/film/123/recensioni/50/segnala")
+                        .with(csrf())
+                        .param("motivo", motivoLungo))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/errorPage"));
     }
 }

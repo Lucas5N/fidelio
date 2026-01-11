@@ -1,5 +1,7 @@
 package it.unisa.fidelio.application.controller;
 
+import it.unisa.fidelio.application.AdminService;
+import it.unisa.fidelio.application.ListaRaccomandatiService; // <--- 1. IMPORT NUOVO
 import it.unisa.fidelio.application.UtenteService;
 import it.unisa.fidelio.storage.Utente;
 import it.unisa.fidelio.storage.UtenteRepository;
@@ -10,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.userdetails.User; // Importante: Implementazione concreta
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,6 +25,8 @@ import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -35,20 +39,17 @@ class ProfiloControllerTest {
 
     private MockMvc mockMvc;
 
-    @Mock
-    private UtenteService utenteService;
-
-    @Mock
-    private UtenteRepository utenteRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    @Mock private UtenteService utenteService;
+    @Mock private UtenteRepository utenteRepository;
+    @Mock private PasswordEncoder passwordEncoder;
+    @Mock private AdminService adminService;
+    @Mock private ListaRaccomandatiService raccomandatiService; // <--- 2. MOCK AGGIUNTO
 
     private Utente utenteTest;
 
     @BeforeEach
     void setUp() {
-        // --- 1. Setup Dati Utente ---
+        // Setup Utente base
         utenteTest = new Utente();
         utenteTest.setId(1);
         utenteTest.setEmail("mario@email.com");
@@ -59,51 +60,72 @@ class ProfiloControllerTest {
         utenteTest.setBio("Bio test");
         utenteTest.setPassword("passEncoded");
         utenteTest.setDtype("Cinefilo");
+        utenteTest.setAmministratore(false);
         utenteTest.setRecensioni(new HashSet<>());
         utenteTest.setImmagineProfilo(new byte[0]);
-        // Se hai listePrivate, inizializzale: utenteTest.setListePrivate(new HashSet<>());
 
-        // --- 2. Setup View Resolver (Per evitare errore Thymeleaf) ---
+        // Setup View Resolver
         InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
         viewResolver.setPrefix("/templates/");
         viewResolver.setSuffix(".html");
 
-        ProfiloController controller = new ProfiloController(utenteService, utenteRepository, passwordEncoder);
+        // <--- 3. COSTRUTTORE AGGIORNATO (passiamo anche raccomandatiService)
+        ProfiloController controller = new ProfiloController(
+                utenteService,
+                utenteRepository,
+                passwordEncoder,
+                adminService,
+                raccomandatiService
+        );
 
-        // --- 3. Setup Resolver per UserDetails (Per evitare errore Constructor) ---
-        // Questo pezzo di codice intercetta la richiesta di "UserDetails" e restituisce un oggetto valido
-        HandlerMethodArgumentResolver userDetailsResolver = new HandlerMethodArgumentResolver() {
-            @Override
-            public boolean supportsParameter(MethodParameter parameter) {
-                // Si attiva se il parametro è di tipo UserDetails
-                return UserDetails.class.isAssignableFrom(parameter.getParameterType());
-            }
+        // Configurazione per evitare errori null pointer se il controller chiama il service
+        // Usiamo lenient() perché in alcuni test di aggiornamento (POST) non viene chiamato
+        lenient().when(raccomandatiService.getRaccomandazioni(anyString())).thenReturn(new ArrayList<>());
 
-            @Override
-            public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                                          NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-                // Restituisce un utente Spring Security valido
-                return new User("mario@email.com", "pass", Collections.emptyList());
-            }
-        };
-
-        // --- 4. Costruzione MockMvc ---
+        // Setup MockMvc
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setViewResolvers(viewResolver)
-                .setCustomArgumentResolvers(userDetailsResolver) // <--- ECCO IL FIX
+                .setCustomArgumentResolvers(new HandlerMethodArgumentResolver() {
+                    @Override
+                    public boolean supportsParameter(MethodParameter parameter) {
+                        return UserDetails.class.isAssignableFrom(parameter.getParameterType());
+                    }
+
+                    @Override
+                    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+                                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+                        return new User("mario@email.com", "pass", Collections.emptyList());
+                    }
+                })
                 .build();
     }
 
     @Test
-    void testVisualizzaProfilo_Successo() throws Exception {
-        // Mock del comportamento del service
+    void testVisualizzaProfilo_Successo_UtenteStandard() throws Exception {
+        utenteTest.setAmministratore(false);
         when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
 
-        // Non serve più .principal() perché il CustomArgumentResolver inietta l'utente automaticamente
         mockMvc.perform(get("/profilo"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("profiloUtente"))
-                .andExpect(model().attribute("utenteCorrente", utenteTest));
+                .andExpect(model().attribute("utenteCorrente", utenteTest))
+                .andExpect(model().attributeDoesNotExist("listaUtenti"))
+                .andExpect(model().attributeDoesNotExist("listaSegnalazioni"));
+    }
+
+    @Test
+    void testVisualizzaProfilo_Successo_Amministratore() throws Exception {
+        utenteTest.setAmministratore(true);
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+        when(utenteRepository.findAll()).thenReturn(List.of(utenteTest));
+        when(adminService.getSegnalazioniAperte()).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/profilo"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("profiloUtente"))
+                .andExpect(model().attribute("utenteCorrente", utenteTest))
+                .andExpect(model().attributeExists("listaUtenti"))
+                .andExpect(model().attributeExists("listaSegnalazioni"));
     }
 
     @Test
@@ -117,7 +139,6 @@ class ProfiloControllerTest {
 
         mockMvc.perform(multipart("/profilo/aggiorna")
                         .file(fileImmagine)
-                        // Non serve .principal(), il resolver fa il lavoro sporco
                         .param("nome", "MarioNew")
                         .param("cognome", "RossiNew")
                         .param("username", "MarioUserNew")
@@ -132,5 +153,163 @@ class ProfiloControllerTest {
                 .andExpect(redirectedUrl("/profilo"));
 
         verify(utenteRepository).save(any(Utente.class));
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    // TEST "HACKED" (Rimasti invariati come da tua richiesta)
+    // ──────────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void testAggiornaProfilo_UsernameTroppoLungo() throws Exception {
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "QuestoUsernameEVeramenteTroppoLungoPerEssereAccettatoDalSistema")
+                        .param("nome", "Mario")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "")
+                        .param("testata", "")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_PasswordCorta() throws Exception {
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "Mario")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "short")
+                        .param("testata", "")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_ConfermaPasswordErrata() throws Exception {
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "Mario")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "password123")
+                        .param("testata", "")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_NomeErrato() throws Exception {
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "M")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "")
+                        .param("testata", "")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_CognomeErrato() throws Exception {
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "Mario")
+                        .param("cognome", "R")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "")
+                        .param("testata", "")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_ViaErrata() throws Exception {
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "Mario")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "!@#")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "")
+                        .param("testata", "")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_TestataErrata_Critico() throws Exception {
+        utenteTest.setDtype("Critico");
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "Mario")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "")
+                        .param("testata", "!@#")
+                        .param("casa", "")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
+    }
+
+    @Test
+    void testAggiornaProfilo_CasaProduzioneErrata_Fedele() throws Exception {
+        utenteTest.setDtype("Fedele");
+        when(utenteService.findByEmail("mario@email.com")).thenReturn(utenteTest);
+
+        mockMvc.perform(multipart("/profilo/aggiorna")
+                        .param("username", "MarioUser")
+                        .param("nome", "Mario")
+                        .param("cognome", "Rossi")
+                        .param("email", "mario@email.com")
+                        .param("viaENumCivico", "Via Roma 1")
+                        .param("bio", "Bio test")
+                        .param("nuovaPassword", "")
+                        .param("testata", "")
+                        .param("casa", "!@#")
+                        .param("credit", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/profilo"));
     }
 }
