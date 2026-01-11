@@ -159,7 +159,7 @@
                         <span style="color: #ffd700;">★ <span th:text="${#numbers.formatDecimal(film.voteAverage, 1, 1)}">8.5</span></span>
                     </div>
 
-                    <a th:href="@{'/film/dettagli/' + ${film.id}}"
+                    <a th:href="@{'/film/' + ${film.id}}"
                        style="margin-top: 10px; font-size: 0.8rem; text-decoration: none; color: #f06a2a; border: 1px solid #f06a2a; padding: 4px 8px; border-radius: 4px;">
                         Vedi
                     </a>
