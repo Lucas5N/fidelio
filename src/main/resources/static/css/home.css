@@ -14,14 +14,34 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body{
-    margin:0;
+body {
+    margin: 0;
     min-height: 100vh;
-    background: radial-gradient(1200px 600px at 20% 0%, rgba(240,106,42,.10), transparent 60%),
-    radial-gradient(1000px 600px at 80% 20%, rgba(240,106,42,.08), transparent 55%),
-    var(--bg);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
     color: var(--text);
-    font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    /* Rimuoviamo il background da qui */
+    background-color: var(--bg);
+    position: relative;
+    /* Flex layout per sticky footer */
+    display: flex;
+    flex-direction: column;
+}
+
+/* CREIAMO LO SFONDO FISSO */
+body::before {
+    content: "";
+    position: fixed; /* Sta fermo anche se scrolli */
+    inset: 0;        /* Occupa tutto lo schermo */
+    z-index: -1;     /* Sta dietro a tutto */
+
+    /* Il tuo gradiente originale */
+    background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(240,106,42,.10), transparent 60%),
+        radial-gradient(1000px 600px at 80% 20%, rgba(240,106,42,.08), transparent 55%),
+        var(--bg); /* Colore base di fallback */
+
+    background-size: cover;
+    pointer-events: none; /* Non blocca i click */
 }
 
 
@@ -99,10 +119,11 @@ body{
     padding: 160px 24px 48px;
 }
 
+
 .hero-tagline{
     position: absolute;
     left: 50%;
-    bottom: 64px;
+    bottom: 150px;
     transform: translateX(-50%);
     text-align: center;
     max-width: 820px;
@@ -112,11 +133,12 @@ body{
 
 .hero-tagline p{
     margin: 0;
-    font-size: 22px;
+    font-size: 32px;
     line-height: 1.4;
     font-weight: 500;
     color: rgba(255,255,255,.92);
     letter-spacing: .01em;
+    text-shadow: rgba(0,0,0,0.5) 2px 5px;
 }
 
 .hero-tagline span{
@@ -157,7 +179,8 @@ body{
 }
 
 
-.section + .section{ margin-top: 26px; }
+.section + .section{ margin-top: 80px; }
+
 .section-head{
     display:flex;
     align-items:center;
@@ -379,13 +402,9 @@ body{
 }
 
 /* ML RECOMMENDATIONS SECTION */
-.ml-reco{
+.ml-reco {
     padding: 80px 24px;
-    background: linear-gradient(
-            to bottom,
-            rgba(240,106,42,.06),
-            rgba(12,12,14,0)
-    );
+    background: transparent;
 }
 
 .ml-reco-inner{
@@ -951,6 +970,18 @@ body.is-logged .guest-content {
     }
 }
 
+/*LINK COMMUNITY*/
+.btn {
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.btn:hover {
+    color: #ff8a50;
+    text-decoration: underline;
+}
+
 
 
 
@@ -997,7 +1028,7 @@ body.is-logged .guest-content {
         bottom: 48px;
     }
     .hero-tagline p{
-        font-size: 18px;
+        font-size: 24px;
     }
     .hero-tagline span{
         font-size: 15px;
