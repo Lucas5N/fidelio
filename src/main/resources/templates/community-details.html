@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Community - Fidelio</title>
 
-    <!-- 1. Ordine CSS Importante: Base -> Components -> Specifico -->
+    <!-- STILE: Dare importanza all'ordine -->
     <link rel="stylesheet" th:href="@{/css/home.css}" />
     <link rel="stylesheet" th:href="@{/css/components.css}" />
     <link rel="stylesheet" th:href="@{/css/community.css}" />
@@ -14,12 +14,10 @@
 </head>
 <body>
 
-    <!-- 2. NAVBAR NEL FLUSSO NATURALE -->
     <div class="topnav">
         <div th:replace="~{fragments/navbar :: navbar}"></div>
     </div>
 
-    <!-- 3. CONTENUTO -->
     <div class="page-wrapper">
         <div class="comm-container">
 
@@ -55,26 +53,11 @@
                 </div>
 
                 <div id="threadList">
-                    <!-- JS population -->
                 </div>
             </main>
-
-            <!-- SIDEBAR DESTRA -->
-            <aside class="sidebar-right">
-                <div class="members-card">
-                    <div class="section-head-small">Membri Online</div>
-                    <div class="member-row">
-                        <div class="status-dot"></div>
-                        <div class="avatar avatar--accent" style="width:24px; height:24px; font-size:10px;">P</div>
-                        <span>Paolo</span>
-                    </div>
-                </div>
-            </aside>
-
         </div>
     </div>
 
-    <!-- 4. FOOTER -->
     <footer>
         <div th:replace="~{fragments/footer :: footer}"></div>
     </footer>

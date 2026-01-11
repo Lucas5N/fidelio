@@ -18,7 +18,7 @@
         <nav class="nav-center">
             <a class="nav-item" th:href="@{/filmlist}">Films</a>
             <a class="nav-item" th:href="@{/lists}">Lists</a>
-            <a class="nav-item" sec:authorize="isAuthenticated()" th:href="@{/diary}">Diary</a>
+            <a class="nav-item" sec:authorize="isAuthenticated()" th:href="@{/communities}">Community</a>
         </nav>
 
         <form class="nav-search nav-search--desktop" th:action="@{/search}" method="get" role="search">
