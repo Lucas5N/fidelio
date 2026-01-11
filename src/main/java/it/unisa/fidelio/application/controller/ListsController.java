@@ -46,6 +46,7 @@ public class ListsController {
     @GetMapping("/{id}")
     public String listDetail(@PathVariable Integer id, Model model) {
         model.addAttribute("movies", listaService.getFilmLista(id));
+        model.addAttribute("listId", id);
         return "lists/detail";
     }
 
@@ -73,6 +74,16 @@ public class ListsController {
         );
 
         return "redirect:/movies/" + tmdbId;
+    }
+
+    @PostMapping("/{listId}/remove")
+    public String removeMovie(
+            @PathVariable Integer listId,
+            @RequestParam Long tmdbId,
+            Principal principal
+    ) {
+        listaService.rimuoviFilm(listId, tmdbId, principal.getName());
+        return "redirect:/lists/" + listId;
     }
 
 

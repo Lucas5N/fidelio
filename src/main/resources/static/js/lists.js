@@ -1,11 +1,7 @@
-
-    function openCreateListModal(){
-    document.getElementById('createListModal')
-        .classList.add('is-open');
+function openCreateListModal(){
+    document.getElementById("createListModal").style.display = "flex";
 }
 
-    function closeCreateListModal(){
-    document.getElementById('createListModal')
-        .classList.remove('is-open');
+function closeCreateListModal(){
+    document.getElementById("createListModal").style.display = "none";
 }
-

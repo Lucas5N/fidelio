@@ -49,6 +49,16 @@ public class ListaPrivataService {
         lista.getFilmTmdb().put(tmdbId, LocalDate.now());
     }
 
+    @Transactional
+    public void rimuoviFilm(Integer listaId, Long tmdbId, String email) {
+        ListaPrivata lista = repository.findById(listaId).orElseThrow();
+
+        if (!lista.getProprietario().getEmail().equals(email)) {
+            throw new AccessDeniedException("Non autorizzato");
+        }
+
+        lista.getFilmTmdb().remove(tmdbId);
+    }
 
 
     public void segnaComeVisto(Integer listaId, Long tmdbId) {
