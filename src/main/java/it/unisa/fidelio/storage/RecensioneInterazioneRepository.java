@@ -4,12 +4,23 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional; // <--- Importante!
 import java.util.Set;
 
 public interface RecensioneInterazioneRepository extends JpaRepository<RecensioneInterazione, Long> {
 
-    boolean existsByUtenteIdAndRecensioneIdAndTipo(Integer utente_id, Integer recensione_id, RecensioneInterazione.TipoInterazione tipo);
+    // Questo va bene per controlli rapidi
+    boolean existsByUtenteIdAndRecensioneIdAndTipo(Integer utenteId, Integer recensioneId, RecensioneInterazione.TipoInterazione tipo);
 
+    // --- AGGIUNGI QUESTO METODO ---
+    // Serve per recuperare l'oggetto specifico e poterlo cancellare o modificare
+    Optional<RecensioneInterazione> findByUtenteIdAndRecensioneIdAndTipo(
+            Integer utenteId,
+            Integer recensioneId,
+            RecensioneInterazione.TipoInterazione tipo
+    );
+
+    // Le tue query personalizzate vanno bene
     @Query("SELECT ri FROM RecensioneInterazione ri WHERE ri.utente.id = :utenteId AND ri.tipo = :tipo")
     Set<RecensioneInterazione> findByUtenteIdAndTipo(
             @Param("utenteId") Integer utenteId,

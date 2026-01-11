@@ -159,24 +159,61 @@ public class RecensioneService {
         gestisciInterazione(recensioneId, utenteId, RecensioneInterazione.TipoInterazione.DISLIKE);
     }
 
-    private void gestisciInterazione(Integer recensioneId, int utenteId, RecensioneInterazione.TipoInterazione tipo) {
-        if (recensioneInterazioneRepository.existsByUtenteIdAndRecensioneIdAndTipo(utenteId, recensioneId, tipo)) {
-            return;
-        }
-
+    @Transactional
+    public void gestisciInterazione(Integer recensioneId, int utenteId, RecensioneInterazione.TipoInterazione nuovoTipo) {
         Recensione r = recensioneRepo.findById(recensioneId)
                 .orElseThrow(() -> new IllegalArgumentException("Recensione non trovata"));
 
+        // Impedisci l'autovoto
         if (r.getAutore().getId().equals(utenteId)) return;
 
-        if (tipo == RecensioneInterazione.TipoInterazione.LIKE) {
-            r.setNumLike(r.getNumLike() + 1);
-        } else {
-            r.setNumDislike(r.getNumDislike() + 1);
+        // Cerchiamo se esistono già interazioni di questo utente per questa recensione
+        var existingLike = recensioneInterazioneRepository
+                .findByUtenteIdAndRecensioneIdAndTipo(utenteId, recensioneId, RecensioneInterazione.TipoInterazione.LIKE);
+
+        var existingDislike = recensioneInterazioneRepository
+                .findByUtenteIdAndRecensioneIdAndTipo(utenteId, recensioneId, RecensioneInterazione.TipoInterazione.DISLIKE);
+
+        // LOGICA PER IL LIKE
+        if (nuovoTipo == RecensioneInterazione.TipoInterazione.LIKE) {
+            if (existingLike.isPresent()) {
+                // TOGGLE OFF: L'utente ha già messo like e clicca di nuovo -> Rimuovi Like
+                recensioneInterazioneRepository.delete(existingLike.get());
+                r.setNumLike(Math.max(0, r.getNumLike() - 1));
+            } else {
+                // Se c'era un DISLIKE, lo rimuoviamo (SWITCH)
+                if (existingDislike.isPresent()) {
+                    recensioneInterazioneRepository.delete(existingDislike.get());
+                    r.setNumDislike(Math.max(0, r.getNumDislike() - 1));
+                }
+                // Aggiungi il NUOVO LIKE
+                salvaNuovaInterazione(r, utenteId, RecensioneInterazione.TipoInterazione.LIKE);
+                r.setNumLike(r.getNumLike() + 1);
+            }
+        }
+        // LOGICA PER IL DISLIKE
+        else {
+            if (existingDislike.isPresent()) {
+                // TOGGLE OFF: L'utente ha già messo dislike e clicca di nuovo -> Rimuovi Dislike
+                recensioneInterazioneRepository.delete(existingDislike.get());
+                r.setNumDislike(Math.max(0, r.getNumDislike() - 1));
+            } else {
+                // Se c'era un LIKE, lo rimuoviamo (SWITCH)
+                if (existingLike.isPresent()) {
+                    recensioneInterazioneRepository.delete(existingLike.get());
+                    r.setNumLike(Math.max(0, r.getNumLike() - 1));
+                }
+                // Aggiungi il NUOVO DISLIKE
+                salvaNuovaInterazione(r, utenteId, RecensioneInterazione.TipoInterazione.DISLIKE);
+                r.setNumDislike(r.getNumDislike() + 1);
+            }
         }
 
         recensioneRepo.save(r);
+    }
 
+    // Metodo helper per evitare duplicazione di codice nel salvataggio
+    private void salvaNuovaInterazione(Recensione r, int utenteId, RecensioneInterazione.TipoInterazione tipo) {
         RecensioneInterazione inter = new RecensioneInterazione();
         inter.setUtente(utenteRepository.getReferenceById(utenteId));
         inter.setRecensione(r);

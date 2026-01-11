@@ -570,6 +570,22 @@ body {
     grid-template-columns: 1fr 1.6fr;
 }
 
+/* Quando il voto è attivo */
+.btn-vote.voted-active {
+    background-color: #e0f2fe; /* Un colore di sfondo chiaro */
+    color: #0284c7;            /* Un colore del testo/icona più acceso */
+    border-color: #0284c7;
+    font-weight: bold;
+}
+
+/* Specifico per Dislike se vuoi un colore diverso (es. rosso) */
+.dislike-btn.voted-active {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+
 .modal-close {
     position: absolute;
     top: 16px;

@@ -17,7 +17,6 @@
 </div>
 
 
-<!-- ADD TO LIST MODAL -->
 <div id="addToListModal" class="addlist-overlay">
 
     <div class="addlist-card">
@@ -62,7 +61,6 @@
 
 
 
-<!-- HERO with backdrop -->
 <section class="movie-hero" th:style="${movie.backdropUrl != ''} ? 'background-image: url(' + ${movie.backdropUrl} + ');' : ''">
     <div class="hero-scrim"></div>
     <div class="hero-content">
@@ -94,10 +92,8 @@
                 </span>
             </div>
 
-            <!-- ACTIONS -->
             <div class="actions">
 
-                <!-- ADD TO LIST -->
                 <button class="btn"
                         type="button"
                         th:if="${utenteLoggato != null}"
@@ -138,7 +134,6 @@
     </div>
 </section>
 
-<!-- CAST -->
 <section class="movie-section" th:if="${!movie.castTop.isEmpty()}">
     <div class="section-head">
         <h2>Cast</h2>
@@ -157,7 +152,6 @@
     </div>
 </section>
 
-<!-- RECENSIONI -->
 <section class="section reviews-section">
     <div class="section-head reviews-head">
         <h2>Recensioni</h2>
@@ -191,37 +185,36 @@
                 <p th:text="${r.contentPreview}">...</p>
             </div>
 
-            <!-- INTERAZIONI (server-side authentication) -->
             <div class="review-actions" th:if="${r.local}">
-                <!-- LIKE -->
+
                 <form class="like-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/like'}"
                       method="post"
-                      th:if="${utenteLoggato != null and !likeGiaFatti.contains(r.localReviewId) and !r.username.equals(utenteLoggato.username)}">
-                    <button type="submit" class="btn-vote like-btn">
+                      th:if="${utenteLoggato != null and !r.username.equals(utenteLoggato.username)}">
+
+                    <button type="submit" class="btn-vote like-btn"
+                            th:classappend="${likeGiaFatti.contains(r.localReviewId)} ? 'voted-active' : ''">
                         👍 <span class="like-count" th:text="${r.numLike}">0</span>
                     </button>
                 </form>
-                <span th:if="${utenteLoggato != null and likeGiaFatti.contains(r.localReviewId)}"
-                      class="already-voted">👍 Già apprezzata (<span th:text="${r.numLike}">0</span>)</span>
+
                 <span th:if="${utenteLoggato == null or (utenteLoggato != null and r.username.equals(utenteLoggato.username))}"
                       class="like-display" style="opacity: 0.7;">👍 <span th:text="${r.numLike}">0</span></span>
 
-                <!-- DISLIKE -->
                 <form class="dislike-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/dislike'}"
                       method="post"
-                      th:if="${utenteLoggato != null and !dislikeGiaFatti.contains(r.localReviewId) and !r.username.equals(utenteLoggato.username)}">
-                    <button type="submit" class="btn-vote dislike-btn">
+                      th:if="${utenteLoggato != null and !r.username.equals(utenteLoggato.username)}">
+
+                    <button type="submit" class="btn-vote dislike-btn"
+                            th:classappend="${dislikeGiaFatti.contains(r.localReviewId)} ? 'voted-active' : ''">
                         👎 <span class="dislike-count" th:text="${r.numDislike}">0</span>
                     </button>
                 </form>
-                <span th:if="${utenteLoggato != null and dislikeGiaFatti.contains(r.localReviewId)}"
-                      class="already-voted">👎 Già non apprezzata (<span th:text="${r.numDislike}">0</span>)</span>
+
                 <span th:if="${utenteLoggato == null or (utenteLoggato != null and r.username.equals(utenteLoggato.username))}"
                       class="dislike-display" style="opacity: 0.7;">👎 <span th:text="${r.numDislike}">0</span></span>
 
-                <!-- ELIMINA (only for review author) -->
                 <form class="delete-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/elimina'}"
                       method="post"
@@ -230,7 +223,6 @@
                     <button type="submit" class="btn-action btn-delete">Elimina</button>
                 </form>
 
-                <!-- SEGNALA (not for own reviews) -->
                 <form class="report-form inline-form"
                       th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/segnala'}"
                       method="post"
@@ -241,7 +233,6 @@
                       class="already-reported">⚠️ Già segnalata</span>
             </div>
 
-            <!-- COMMENTI -->
             <div class="comments-section" th:if="${r.comments != null and !#lists.isEmpty(r.comments)}">
                 <div class="comment" th:each="c : ${r.comments}">
                     <div class="comment-header">
@@ -258,7 +249,6 @@
                 </div>
             </div>
 
-            <!-- FORM COMMENTO (only for logged in users) -->
             <div class="add-comment-section" th:if="${r.local and utenteLoggato != null}">
                 <form class="comment-form" th:action="@{'/film/' + ${movie.tmdbId} + '/recensioni/' + ${r.localReviewId} + '/commenta'}" method="post">
                     <textarea name="testo" placeholder="Scrivi un commento..." required></textarea>
@@ -273,7 +263,6 @@
     </div>
 </section>
 
-<!-- MODAL SCRIVI RECENSIONE -->
 <div id="reviewModal" class="modal-overlay">
     <div class="modal-container">
         <button class="modal-close" onclick="closeReviewModal()">&times;</button>
