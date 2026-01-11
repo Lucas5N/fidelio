@@ -25,6 +25,22 @@ public class HomeService {
         this.posterBase = posterBase;
     }
 
+    public List<FilmCardDto> getMlPreview(int limit) {
+        Map<Integer, String> genreMap = genreService.getGenreMap();
+
+        var resp = tmdbClient.discoverMovies(
+                null,   // nessun genere
+                null,   // nessun anno
+                3       // pagina diversa
+        );
+
+        return resp.results().stream()
+                .limit(limit)
+                .map(m -> toCard(m, genreMap))
+                .toList();
+    }
+
+
     public List<FilmCardDto> getPopularCards(int limit) {
         Map<Integer, String> genreMap = genreService.getGenreMap();
         var resp = tmdbClient.getPopular(1);

@@ -24,6 +24,7 @@ public class HomeController {
     public String home(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         model.addAttribute("popularFilms", homeService.getPopularCards(4));
         model.addAttribute("newReleases", homeService.getNewReleaseCards(4));
+        model.addAttribute("mlPreview", homeService.getMlPreview(6));
 
         if (userDetails != null) {
             UtenteDTO userDTO = utenteService.mapToDTO(utenteService.findByEmail(userDetails.getUsername()));
