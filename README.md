@@ -4,7 +4,7 @@
 [![GitHub language count](https://img.shields.io/github/languages/count/Lucas5N/fidelio)]()
 [![Top language](https://img.shields.io/github/languages/top/Lucas5N/fidelio)]()
 
-**Fidelio** è una piattaformadi social media, sviluppata per l'esame di Ingegneria del Software, progettata specificamente per gli appassionati di cinema. Offre uno spazio dedicato in cui gli utenti possono esplorare film, condividere opinioni e avviare discussioni approfondite sulla settima arte.
+**Fidelio** è una piattaforma di social media, sviluppata per l'esame di Ingegneria del Software, progettata specificamente per gli appassionati di cinema. Offre uno spazio dedicato in cui gli utenti possono esplorare film, condividere opinioni e avviare discussioni approfondite sulla settima arte.
 
 ## Indice
 
