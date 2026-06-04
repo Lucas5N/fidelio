@@ -12,8 +12,6 @@
 2. [Stack Tecnologico](#stack-tecnologico)
 3. [Documentazione](#documentazione)
 4. [Installazione e Setup](#installazione-e-setup)
-5. [Sviluppo Locale](#sviluppo-locale)
-6. [Autore](#autore)
 
 ---
 
